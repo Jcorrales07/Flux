@@ -1,6 +1,10 @@
 #include <iostream>
 
+#include "interpreter/FluxLexer.h"
+
 int main() {
-    std::cout << "Hello, World!" << std::endl;
+
+    readFluxFile("../fluxProgram.flux");
+
     return 0;
 }

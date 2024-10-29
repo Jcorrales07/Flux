@@ -8,56 +8,47 @@
 #include "string"
 
 enum class TokenType {
-    IDENTIFIER,  // Variables y constantes
-    KEYWORD,     // Palabras reservadas
+
+    // Variables y constantes
+    CONST,
+    IDENTIFIER,  // Identificadores de las variables, funciones, classes y etc
     INTEGER,     // Valores enteros
-    FLOAT,       // Valores decimales
+    DOUBLE,       // Valores decimales
     STRING,      // Cadenas de texto
-    OPERATOR,    // +, -, *, /, %, <, >, =
-    PUNCTUATION, // ;, (, ), {, }, !
-    ILLEGAL,     // Cualquier cosa que no este aceptado
-    EOFF,         // End Of Flux File
-};
+    CHAR,
+    BOOLEAN,
 
-enum class FluxOperator {
-    // Operadores de Aritmetica
-    ADD, SUBSTRACT, MULTIPLY, DIVIDE, MODULE,
-
-    // Operadores de comparación
-    LESS, GREATER, ASSIGN, LESS_EQUAL, GREATER_EQUAL,
-
-    // Operadores logicos
-    AND, OR, NOT, EQUAL, NOT_EQUAL,
-
-    NA, // No Aplica
-};
-
-enum class FluxKeywords {
-    // Definicion de variables y literales
-    VAR, CONST,
-
+    // Keywords
     // Definicion de estructuras de control
     IF, ELSEIF, ELSE, FOR, WHILE, BREAK, CONTINUE, PASS, TRY, CATCH, FINALLY, THROW,
 
     // Definicion de funciones
     FUNC, RETURN, LAMBDA,
-};
 
-enum class FluxPunctuation {
+    //OPERATOR,    +, -, *, /, %,
+    // Operadores de Aritmetica
+    ADD, SUBSTRACT, MULTIPLY, DIVIDE, MODULE,
+
+    // Operadores de comparación  <, >, =, <=, >=, ==, !=
+    LESS, GREATER, ASSIGN, LESS_EQUAL, GREATER_EQUAL, EQUAL, NOT_EQUAL,
+
+    // Operadores Logicos &&, ||, !
+    AND, OR, NOT,
+
+    //PUNCTUATION: ,, (, ), {, }, !
     COMMA,          // ,
     LPAREN, RPAREN, // ()
     LBRACE, RBRACE, // {}
     LBRACK, RBRACK, // []
-    EXCLAMATION,    // !
-    NA,             // No Aplica
+
+    ILLEGAL,     // Cualquier cosa que no este reconocido
+    EOFF,         // End Of Flux File
 };
 
 struct Token {
     // Informacion del token
-    std::string lexeme;          // El token como tal
+    std::string lexeme;         // El token como tal
     TokenType type;             // Tipo de token
-    FluxOperator opType;        // Si es un operador, especificar cual
-    FluxPunctuation puncType;   // Si es un signo de punctuacion, especificar cual
 
     // Direccion del token en el archivo
     int line;                   // El numero de la linea en donde el token esta

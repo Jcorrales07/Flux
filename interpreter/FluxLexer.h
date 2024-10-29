@@ -5,10 +5,10 @@
 #ifndef FLUX_FLUXLEXER_H
 #define FLUX_FLUXLEXER_H
 
+#include <string>
+#include <vector>
+#include "FluxTokens.h"
 
-class FluxLexer {
-
-};
-
+void readFluxFile(const char *inputFile);
 
 #endif //FLUX_FLUXLEXER_H
