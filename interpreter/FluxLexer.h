@@ -2,13 +2,34 @@
 // Created by Corra on 10/28/2024.
 //
 
-#ifndef FLUX_FLUXLEXER_H
-#define FLUX_FLUXLEXER_H
+#ifndef FLUX_LEXER_H
+#define FLUX_LEXER_H
 
 #include <string>
+#include <fstream>
 #include <vector>
 #include "FluxTokens.h"
 
-void readFluxFile(const char *inputFile);
+class FluxLexer {
+public:
+    FluxLexer(const std::string &filename);
+    std::vector<Token> tokenize();  // Método principal para la tokenización
 
-#endif //FLUX_FLUXLEXER_H
+private:
+    std::ifstream fileStream;
+    std::string filename;
+    int line = 1;
+    int column = 0;
+    char currentChar;
+
+    bool isFluxFile();
+    bool readNextChar();
+    char readNextOp();
+    Token nextToken();
+    Token makeIdentifierOrKeyword();
+    Token makeNumber();
+    Token makeString();
+    void skipWhitespace();
+};
+
+#endif // FLUX_LEXER_H

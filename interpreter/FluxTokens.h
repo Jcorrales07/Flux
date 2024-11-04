@@ -8,15 +8,18 @@
 #include "string"
 
 enum class TokenType {
-
     // Variables y constantes
     CONST,
+    VAR_NUMBER,     // Variable de tipo numerico
+    NUMBER,         // Valor numerico
+    VAR_STRING,     // Variable de tipo texto
+    STRING,         // Valor de texto
+    VAR_BOOLEAN,    // Variable de tipo booleano
+    TRUE,        // Valor booleano
+    FALSE,
     IDENTIFIER,  // Identificadores de las variables, funciones, classes y etc
-    INTEGER,     // Valores enteros
-    DOUBLE,       // Valores decimales
-    STRING,      // Cadenas de texto
-    CHAR,
-    BOOLEAN,
+    ASSIGN,
+
 
     // Keywords
     // Definicion de estructuras de control
@@ -30,7 +33,7 @@ enum class TokenType {
     ADD, SUBSTRACT, MULTIPLY, DIVIDE, MODULE,
 
     // Operadores de comparación  <, >, =, <=, >=, ==, !=
-    LESS, GREATER, ASSIGN, LESS_EQUAL, GREATER_EQUAL, EQUAL, NOT_EQUAL,
+    LESS, GREATER, LESS_EQUAL, GREATER_EQUAL, EQUAL, NOT_EQUAL,
 
     // Operadores Logicos &&, ||, !
     AND, OR, NOT,
@@ -51,8 +54,8 @@ struct Token {
     TokenType type;             // Tipo de token
 
     // Direccion del token en el archivo
-    int line;                   // El numero de la linea en donde el token esta
-    int column;                 // El numero de columna en donde el token esta
+    int line = 0;                   // El numero de la linea en donde el token esta
+    int column = 0;                 // El numero de columna en donde el token esta
     std::string file;           // El nombre del archivo en donde esta el token
 };
 
