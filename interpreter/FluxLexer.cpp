@@ -2,8 +2,9 @@
 #include <cctype>
 #include <stdexcept>
 #include <sstream>
+#include <filesystem>
 
-#define EOF_CHAR '\0'
+// Todo: Falta trabajar la parte de aumentar las columnas y filas
 
 // Constructor: abre el archivo y verifica si es .flux
 FluxLexer::FluxLexer(const std::string &filename) : filename(filename) {
@@ -20,130 +21,137 @@ FluxLexer::FluxLexer(const std::string &filename) : filename(filename) {
 
 // Verifica que el archivo tenga extensión .flux
 bool FluxLexer::isFluxFile() {
-    return filename.size() > 5 && filename.substr(filename.size() - 5) == ".flux";
+    std::filesystem::path filePath = filename;
+    return filePath.extension() == ".flux";
 }
 
+// Analizar esta funcion, debe de haber una mejor forma de iterar en los caracteres ::
 // Lee el siguiente carácter del archivo
-bool FluxLexer::readNextChar() {
-    currentChar = fileStream.get();
-    if (fileStream.eof()) {
-        currentChar = EOF_CHAR;
-        return false;
-    }
-
-    if (currentChar == '\n') {
-        line++;
-        column = 0;
-    } else {
-        column++;
-    }
-    return true;
+char FluxLexer::readNextChar() {
+    column++;
+    return fileStream.get();
 }
 
-// Lee el siguiente carácter solo si es parte de un operador de dos caracteres
-char FluxLexer::readNextOp() {
-    char nextChar = fileStream.get();  // Lee el siguiente carácter en el flujo
-    column++;  // Avanza la columna ya que hemos leído otro carácter
-    return nextChar;
+
+bool FluxLexer::isEOF() {
+    return fileStream.eof();
 }
 
 
 // Tokeniza el contenido del archivo
 std::vector<Token> FluxLexer::tokenize() {
     std::vector<Token> tokens;
-    while (readNextChar()) {
+
+    currentChar = readNextChar();
+    // :: Porque lee aca
+    // Itera cuando tengamos caracteres que leer
+    while (!isEOF()) {
+
+        // extraemos el token
         Token token = nextToken();
-        if (token.type != TokenType::ILLEGAL) {
+//        printf(" Token: %s Type: %d\n", token.lexeme.c_str(), static_cast<int>(token.type));
+        printf("Token: %s \tType: %d Line: %d Column: %d\n", token.lexeme.c_str(), static_cast<int>(token.type), token.line, token.column);
+//        printf("Token: %s \tType: %d Line: %d\n", token.lexeme.c_str(), static_cast<int>(token.type), token.line);
+
+        // si no es de tipo EOF
+        if (token.type != TokenType::ILLEGAL && token.type != TokenType::EOFF) {
+//            if (token.type == TokenType::STRING) printf("metemos string\n");
+            // guardamos el token
             tokens.push_back(token);
-        }
-    }
-    tokens.push_back(Token{"", TokenType::EOFF, line, column, filename}); // Agrega el token de EOF
-    return tokens;
-}
-
-// Genera el siguiente token basado en el carácter actual
-Token FluxLexer::nextToken() {
-    skipWhitespace();
-
-    if (currentChar == EOF_CHAR) {
-        return Token{"", TokenType::EOFF, line, column, filename};
-    }
-
-    if (std::isalpha(currentChar) || currentChar == '_') {
-        return makeIdentifierOrKeyword();
-    } else if (std::isdigit(currentChar)) {
-        return makeNumber();
-    } else if (currentChar == '"') {
-        return makeString();
-    }
-
-    // Manejo de operadores de uno y dos caracteres
-    if (currentChar == '=' || currentChar == '!' || currentChar == '>' || currentChar == '<') {
-        char firstChar = currentChar;  // Guarda el primer carácter del operador
-        char secondChar = readNextOp();  // Lee el siguiente carácter en el flujo
-
-        // Verifica si es un operador de dos caracteres
-        if (secondChar == '=') {
-            if (firstChar == '=') return Token{"==", TokenType::EQUAL, line, column - 1, filename};
-            else if (firstChar == '!') return Token{"!=", TokenType::NOT_EQUAL, line, column - 1, filename};
-            else if (firstChar == '>') return Token{">=", TokenType::GREATER_EQUAL, line, column - 1, filename};
-            else if (firstChar == '<') return Token{"<=", TokenType::LESS_EQUAL, line, column - 1, filename};
-        }
-
-        // Si no es un operador de dos caracteres, retrocede el carácter
-        fileStream.unget();
-        column--;  // Ajusta la columna
-
-        // Devuelve el operador de un solo carácter
-        if (firstChar == '=') return Token{"=", TokenType::ASSIGN, line, column, filename};
-        else if (firstChar == '!') return Token{"!", TokenType::NOT, line, column, filename};
-        else if (firstChar == '>') return Token{">", TokenType::GREATER, line, column, filename};
-        else if (firstChar == '<') return Token{"<", TokenType::LESS, line, column, filename};
-    }
-
-    switch (currentChar) {
-        case '+': return Token{std::string(1, currentChar), TokenType::ADD, line, column, filename};
-        case '-': return Token{std::string(1, currentChar), TokenType::SUBSTRACT, line, column, filename};
-        case '*': return Token{std::string(1, currentChar), TokenType::MULTIPLY, line, column, filename};
-        case '/': return Token{std::string(1, currentChar), TokenType::DIVIDE, line, column, filename};
-        case '%': return Token{std::string(1, currentChar), TokenType::MODULE, line, column, filename};
-
-        case '>': return Token{std::string(1, currentChar), TokenType::GREATER, line, column, filename};
-        case '<': return Token{std::string(1, currentChar), TokenType::LESS, line, column, filename};
-        case '=': return Token{std::string(1, currentChar), TokenType::ASSIGN, line, column, filename};
-
-        case ',': return Token{std::string(1, currentChar), TokenType::COMMA, line, column, filename};
-        case '(': return Token{std::string(1, currentChar), TokenType::LPAREN, line, column, filename};
-        case ')': return Token{std::string(1, currentChar), TokenType::RPAREN, line, column, filename};
-        case '{': return Token{std::string(1, currentChar), TokenType::LBRACE, line, column, filename};
-        case '}': return Token{std::string(1, currentChar), TokenType::RBRACE, line, column, filename};
-        case '[': return Token{std::string(1, currentChar), TokenType::LBRACK, line, column, filename};
-        case ']': return Token{std::string(1, currentChar), TokenType::RBRACK, line, column, filename};
-
-        case '!': return Token{std::string(1, currentChar), TokenType::NOT, line, column, filename};
-
-        default: {
+        } else if (token.type == TokenType::ILLEGAL) {
             std::ostringstream errorMessage;
-            errorMessage << "Error: Unexpected token '" << currentChar
+            errorMessage << "Error: Unexpected token '" << token.lexeme
                          << "' at line: " << line
                          << ", column: " << column
                          << " in file: " << filename;
 
             throw std::runtime_error(errorMessage.str());
         }
+
     }
+
+    Token eofToken = {"", TokenType::EOFF, line, column, filename};
+    tokens.push_back(eofToken);
+
+    return tokens;
+}
+
+// Genera el siguiente token basado en el carácter actual
+Token FluxLexer::nextToken() {
+
+    // Ignoramos los espacios en blanco
+    skipWhitespace();
+
+    // Si saltamos la linea, actualizamos la linea y reseteamos la columna
+
+    // revisamos el caracter actual
+    // Hagamos un identificador
+    if (std::isalpha(currentChar) || currentChar == '_') {
+        return makeIdentifierOrKeyword();
+        // si es un numero, formemos un numero
+    } else if (std::isdigit(currentChar)) {
+        return makeNumber();
+        // si es un ", formemos un string
+    } else if (currentChar == '"') {
+        return makeString();
+    }
+
+    // Falta la parte de operadores compuestos
+
+    // Para manejar operadores y variados
+
+    Token token;
+
+    switch (currentChar) {
+        case '(': token = {std::string(1, currentChar), TokenType::LPAREN, line, column, filename}; break;
+        case ')': token = {std::string(1, currentChar), TokenType::RPAREN, line, column, filename}; break;
+        case '{': token = {std::string(1, currentChar), TokenType::LBRACE, line, column, filename}; break;
+        case '}': token = {std::string(1, currentChar), TokenType::RBRACE, line, column, filename}; break;
+        case '[': token = {std::string(1, currentChar), TokenType::LBRACK, line, column, filename}; break;
+        case ']': token = {std::string(1, currentChar), TokenType::RBRACK, line, column, filename}; break;
+
+        case '+': token = {std::string(1, currentChar), TokenType::ADD, line, column, filename}; break;
+        case '-': token = {std::string(1, currentChar), TokenType::SUBSTRACT, line, column, filename}; break;
+        case '*': token = {std::string(1, currentChar), TokenType::MULTIPLY, line, column, filename}; break;
+        case '/': token = {std::string(1, currentChar), TokenType::DIVIDE, line, column, filename}; break;
+        case '%': token = {std::string(1, currentChar), TokenType::MODULE, line, column, filename}; break;
+
+        case '=': token = {std::string(1, currentChar), TokenType::ASSIGN, line, column, filename}; break;
+        case '>': token = {std::string(1, currentChar), TokenType::GREATER, line, column, filename}; break;
+        case '<': token = {std::string(1, currentChar), TokenType::LESS, line, column, filename}; break;
+        case ',': token = {std::string(1, currentChar), TokenType::COMMA, line, column, filename}; break;
+        case '!': token = {std::string(1, currentChar), TokenType::NOT, line, column, filename}; break;
+
+        case '\0': token = {std::string(1, currentChar), TokenType::EOFF, line, column, filename}; break;
+
+        default: token = {std::string(1, currentChar), TokenType::ILLEGAL, line, column, filename};
+    }
+
+    currentChar = readNextChar();
+    return token;
 }
 
 // Identifica y crea tokens para identificadores o palabras clave
 Token FluxLexer::makeIdentifierOrKeyword() {
+
+    // Para guardar el string del identifier
     std::string lexeme(1, currentChar);
 
-    while (readNextChar() && (std::isalnum(currentChar) || currentChar == '_')) {
-        lexeme += currentChar;
+    // :: lee aca tambien
+    // Mientras se un caracter y (contenga numero o _), iteramos...
+    // my_ident1fier
+    while (std::isalnum(currentChar) || currentChar == '_') {
+        currentChar = readNextChar();
+
+        if (std::isalnum(currentChar) || currentChar == '_') {
+            lexeme += currentChar;
+        }
     }
 
-    TokenType type = TokenType::IDENTIFIER; // Cambiar si es palabra clave
+    // se construye la cadena y se le asiga el tipo identifier por default
+    TokenType type = TokenType::IDENTIFIER;
 
+    // Ahora, evaluamos si el token formado, coincide con alguna de las palabras reservadas
     if (lexeme == "if") type = TokenType::IF;
     else if (lexeme == "elseif") type = TokenType::ELSEIF;
     else if (lexeme == "else") type = TokenType::ELSE;
@@ -171,52 +179,64 @@ Token FluxLexer::makeIdentifierOrKeyword() {
     else if (lexeme == "and") type = TokenType::AND;
     else if (lexeme == "or") type = TokenType::OR;
 
-    // Más palabras clave según TokenType
-
-    // Si readNextChar ha avanzado un carácter extra, retrocede.
-    if (!std::isalnum(currentChar) && currentChar != '_') {
-        column--; // Retrocede en la columna
-        fileStream.unget(); // Deshace la lectura en el stream
-    }
-
-    return Token{lexeme, type, line, column, filename};
+    Token token = {lexeme, type, line, column, filename};
+    return token;
 }
 
 // Identifica y crea tokens para números enteros y decimales
 Token FluxLexer::makeNumber() {
     std::string lexeme(1, currentChar);
-    TokenType type = TokenType::NUMBER;  // Se establece como NUMBER para ambos tipos
     bool hasDecimal = false;
 
-    while (readNextChar() && (std::isdigit(currentChar) || currentChar == '.')) {
+    // :: aca tambien
+    while (std::isdigit(currentChar) || currentChar == '.') {
         if (currentChar == '.') {
-            if (hasDecimal) break;  // Si ya tiene un decimal, termina el número
+            if (hasDecimal) break;
             hasDecimal = true;
+            lexeme += currentChar;
         }
-        lexeme += currentChar;
+
+        currentChar = readNextChar();
+
+        if (std::isdigit(currentChar)) {
+            lexeme += currentChar;
+        }
     }
 
-    if (!std::isdigit(currentChar)) {
-        column--;
-        fileStream.unget();
-    }
-
-    return Token{lexeme, type, line, column, filename};
+    return Token{lexeme, TokenType::NUMBER, line, column, filename};
 }
 
 
 // Identifica y crea tokens para cadenas de texto
 Token FluxLexer::makeString() {
-    std::string lexeme;
-    while (readNextChar() && currentChar != '"') {
+    std::string lexeme(1, currentChar);
+
+    // :: y aca tambien
+    while (true) {
+        currentChar = readNextChar();
         lexeme += currentChar;
+
+        if (lexeme.back() == '"') {
+            currentChar = readNextChar();
+            break;
+        }
     }
+
     return Token{lexeme, TokenType::STRING, line, column, filename};
 }
 
 // Omite espacios en blanco y saltos de línea
 void FluxLexer::skipWhitespace() {
     while (std::isspace(currentChar)) {
-        readNextChar();
+//        printf("volvi a entrar\n");
+        if (currentChar == '\n') {
+            // Salto de linea natural
+            line++;
+            column = 0;
+        }
+        currentChar = readNextChar();
     }
 }
+
+// :: me puede estar causando el problema de leer characteres siguientes, y por eso se adelante y me descarta algunos
+// :: En vez de leer, mejor solo verificar que !fileStream.eof(), mientras no estemos al final del archivo, leemos

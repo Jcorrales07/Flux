@@ -39,10 +39,10 @@ enum class TokenType {
     AND, OR, NOT,
 
     //PUNCTUATION: ,, (, ), {, }, !
-    COMMA,          // ,
-    LPAREN, RPAREN, // ()
-    LBRACE, RBRACE, // {}
-    LBRACK, RBRACK, // []
+    COMMA, SEMICOLON,   // , ;
+    LPAREN, RPAREN,     // ()
+    LBRACE, RBRACE,     // {}
+    LBRACK, RBRACK,     // []
 
     ILLEGAL,     // Cualquier cosa que no este reconocido
     EOFF,         // End Of Flux File

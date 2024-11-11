@@ -23,7 +23,8 @@ private:
     char currentChar;
 
     bool isFluxFile();
-    bool readNextChar();
+    bool isEOF();
+    char readNextChar();
     char readNextOp();
     Token nextToken();
     Token makeIdentifierOrKeyword();
