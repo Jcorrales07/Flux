@@ -43,19 +43,14 @@ std::vector<Token> FluxLexer::tokenize() {
     std::vector<Token> tokens;
 
     currentChar = readNextChar();
-    // :: Porque lee aca
     // Itera cuando tengamos caracteres que leer
     while (!isEOF()) {
 
         // extraemos el token
         Token token = nextToken();
-//        printf(" Token: %s Type: %d\n", token.lexeme.c_str(), static_cast<int>(token.type));
-        printf("Token: %s \tType: %d Line: %d Column: %d\n", token.lexeme.c_str(), static_cast<int>(token.type), token.line, token.column);
-//        printf("Token: %s \tType: %d Line: %d\n", token.lexeme.c_str(), static_cast<int>(token.type), token.line);
 
         // si no es de tipo EOF
         if (token.type != TokenType::ILLEGAL && token.type != TokenType::EOFF) {
-//            if (token.type == TokenType::STRING) printf("metemos string\n");
             // guardamos el token
             tokens.push_back(token);
         } else if (token.type == TokenType::ILLEGAL) {
@@ -67,10 +62,9 @@ std::vector<Token> FluxLexer::tokenize() {
 
             throw std::runtime_error(errorMessage.str());
         }
-
     }
 
-    Token eofToken = {"", TokenType::EOFF, line, column, filename};
+    Token eofToken = {"EOFF", TokenType::EOFF, line, column, filename};
     tokens.push_back(eofToken);
 
     return tokens;
@@ -122,9 +116,14 @@ Token FluxLexer::nextToken() {
         case ',': token = {std::string(1, currentChar), TokenType::COMMA, line, column, filename}; break;
         case '!': token = {std::string(1, currentChar), TokenType::NOT, line, column, filename}; break;
 
-        case '\0': token = {std::string(1, currentChar), TokenType::EOFF, line, column, filename}; break;
+        default: {
+            token = {std::string(1, currentChar), TokenType::ILLEGAL, line, column, filename};
 
-        default: token = {std::string(1, currentChar), TokenType::ILLEGAL, line, column, filename};
+            // Si tenemos el final del archivo, entonces asignamos el token
+            if (currentChar == EOF) {
+                token = {std::string(1, currentChar), TokenType::EOFF, line, column, filename};
+            }
+        }
     }
 
     currentChar = readNextChar();
@@ -137,9 +136,7 @@ Token FluxLexer::makeIdentifierOrKeyword() {
     // Para guardar el string del identifier
     std::string lexeme(1, currentChar);
 
-    // :: lee aca tambien
     // Mientras se un caracter y (contenga numero o _), iteramos...
-    // my_ident1fier
     while (std::isalnum(currentChar) || currentChar == '_') {
         currentChar = readNextChar();
 
@@ -188,7 +185,6 @@ Token FluxLexer::makeNumber() {
     std::string lexeme(1, currentChar);
     bool hasDecimal = false;
 
-    // :: aca tambien
     while (std::isdigit(currentChar) || currentChar == '.') {
         if (currentChar == '.') {
             if (hasDecimal) break;
@@ -211,7 +207,6 @@ Token FluxLexer::makeNumber() {
 Token FluxLexer::makeString() {
     std::string lexeme(1, currentChar);
 
-    // :: y aca tambien
     while (true) {
         currentChar = readNextChar();
         lexeme += currentChar;
@@ -228,7 +223,6 @@ Token FluxLexer::makeString() {
 // Omite espacios en blanco y saltos de línea
 void FluxLexer::skipWhitespace() {
     while (std::isspace(currentChar)) {
-//        printf("volvi a entrar\n");
         if (currentChar == '\n') {
             // Salto de linea natural
             line++;
@@ -237,6 +231,3 @@ void FluxLexer::skipWhitespace() {
         currentChar = readNextChar();
     }
 }
-
-// :: me puede estar causando el problema de leer characteres siguientes, y por eso se adelante y me descarta algunos
-// :: En vez de leer, mejor solo verificar que !fileStream.eof(), mientras no estemos al final del archivo, leemos

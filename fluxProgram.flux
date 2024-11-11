@@ -24,5 +24,3 @@ func calcular_edad() {}
 for (number i = 0 i > contador) {}
 
 for
-
-
