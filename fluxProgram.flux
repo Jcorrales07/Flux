@@ -1,26 +1,16 @@
-if (constante > 3.1416) {
-    maria = 80
-} else {
-    isabella = 40
+func add(a, b) {
+    return a + b;
 }
 
-,,,,,,,
+func main() {
+    number result = 5;
+    if (result > 5) {
+        return "Greater";
+    } else {
+        return "Smaller or Equal";
+    }
+}
 
-(hola)
-(123124)
-(><=*-)
-
-number edad = 20
-string nombre = "Joe \n Corrales"
-bool mayorEdad = true
-
-func calcularEdad() {}
-func calcular_edad() {}
-
-== != >= <=
-
-[string, number, bool, if, and, func, for, else, elseif, = 20, 30]
-
-for (number i = 0 i > contador) {}
-
-for
+number x = 10;
+number y = 20;
+number z = x + y;

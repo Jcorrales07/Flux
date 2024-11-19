@@ -13,7 +13,7 @@
 class FluxLexer {
 public:
     FluxLexer(const std::string &filename);
-    std::vector<Token> tokenize();  // Método principal para la tokenización
+    std::vector<Token> tokenize();
 
 private:
     std::ifstream fileStream;
@@ -30,6 +30,9 @@ private:
     Token makeIdentifierOrKeyword();
     Token makeNumber();
     Token makeString();
+    Token makeIdentifier();
+    Token makeKeyword();
+    Token makeOperator();
     void skipWhitespace();
 };
 

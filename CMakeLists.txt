@@ -8,4 +8,6 @@ add_executable(Flux main.cpp
         interpreter/FluxLexer.cpp
         interpreter/FluxLexer.h
         oldFluxLexer.h
+        interpreter/FluxParser.h
+        interpreter/FluxParser.cpp
 )

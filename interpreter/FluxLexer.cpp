@@ -3,6 +3,10 @@
 #include <stdexcept>
 #include <sstream>
 #include <filesystem>
+#include <iostream>
+#include <unordered_map>
+
+using std::pmr::unordered_map;
 
 // Todo: Falta trabajar la parte de aumentar las columnas y filas
 
@@ -32,11 +36,9 @@ char FluxLexer::readNextChar() {
     return fileStream.get();
 }
 
-
 bool FluxLexer::isEOF() {
     return fileStream.eof();
 }
-
 
 // Tokeniza el contenido del archivo
 std::vector<Token> FluxLexer::tokenize() {
@@ -72,30 +74,20 @@ std::vector<Token> FluxLexer::tokenize() {
 
 // Genera el siguiente token basado en el carácter actual
 Token FluxLexer::nextToken() {
-
     // Ignoramos los espacios en blanco
     skipWhitespace();
 
-    // Si saltamos la linea, actualizamos la linea y reseteamos la columna
-
-    // revisamos el caracter actual
-    // Hagamos un identificador
+    // Si es un identificador (letras o guion bajo)
     if (std::isalpha(currentChar) || currentChar == '_') {
         return makeIdentifierOrKeyword();
-        // si es un numero, formemos un numero
     } else if (std::isdigit(currentChar)) {
         return makeNumber();
-        // si es un ", formemos un string
     } else if (currentChar == '"') {
         return makeString();
     }
 
-    // Falta la parte de operadores compuestos
-
-    // Para manejar operadores y variados
-
+    // Operadores y delimitadores
     Token token;
-
     switch (currentChar) {
         case '(': token = {std::string(1, currentChar), TokenType::LPAREN, line, column, filename}; break;
         case ')': token = {std::string(1, currentChar), TokenType::RPAREN, line, column, filename}; break;
@@ -103,40 +95,93 @@ Token FluxLexer::nextToken() {
         case '}': token = {std::string(1, currentChar), TokenType::RBRACE, line, column, filename}; break;
         case '[': token = {std::string(1, currentChar), TokenType::LBRACK, line, column, filename}; break;
         case ']': token = {std::string(1, currentChar), TokenType::RBRACK, line, column, filename}; break;
-
-        case '+': token = {std::string(1, currentChar), TokenType::ADD, line, column, filename}; break;
-        case '-': token = {std::string(1, currentChar), TokenType::SUBSTRACT, line, column, filename}; break;
-        case '*': token = {std::string(1, currentChar), TokenType::MULTIPLY, line, column, filename}; break;
-        case '/': token = {std::string(1, currentChar), TokenType::DIVIDE, line, column, filename}; break;
-        case '%': token = {std::string(1, currentChar), TokenType::MODULE, line, column, filename}; break;
-
-        case '=': token = {std::string(1, currentChar), TokenType::ASSIGN, line, column, filename}; break;
+        case '=':
+            // Verificar si es un operador de asignación (== o =)
+                currentChar = readNextChar(); // Leemos el siguiente carácter
+        if (currentChar == '=') {
+            token = {std::string("=="), TokenType::EQUAL, line, column, filename}; // Es un "=="
+        } else {
+            token = {std::string("="), TokenType::ASSIGN, line, column, filename}; // Es un "="
+        }
+        break;
         case '>': token = {std::string(1, currentChar), TokenType::GREATER, line, column, filename}; break;
         case '<': token = {std::string(1, currentChar), TokenType::LESS, line, column, filename}; break;
         case ',': token = {std::string(1, currentChar), TokenType::COMMA, line, column, filename}; break;
-        case '!': token = {std::string(1, currentChar), TokenType::NOT, line, column, filename}; break;
+        case '!':
+            currentChar = readNextChar();
+        if (currentChar == '=') {
+            token = {std::string("!="), TokenType::NOT_EQUAL, line, column, filename}; // Es un "!="
+        } else {
+            token = {std::string("!"), TokenType::NOT, line, column, filename}; // Es un "!"
+            currentChar = readNextChar(); // Revertimos al siguiente carácter
+        }
+        break;
+        case ';': token = {std::string(1, currentChar), TokenType::SEMICOLON, line, column, filename}; break;
+
+        case ':': token = {std::string(1, currentChar), TokenType::COLON, line, column, filename}; break;
+
+        // Detectamos operadores compuestos como +=, -=, *=, /=, etc.
+        case '+':
+            currentChar = readNextChar();
+            if (currentChar == '=') {
+                token = {std::string("+="), TokenType::ADD_ASSIGN, line, column, filename};
+            } else if (currentChar == ';'){
+                token = {std::string("="), TokenType::SEMICOLON, line, column, filename};
+            }else {
+                token = {std::string("+"), TokenType::ADD, line, column, filename};
+            }
+            break;
+
+        case '-':
+            currentChar = readNextChar();
+            if (currentChar == '=') {
+                token = {std::string("-="), TokenType::SUB_ASSIGN, line, column, filename};
+            } else if (currentChar == ';'){
+                token = {std::string("="), TokenType::SEMICOLON, line, column, filename};
+            }else {
+                token = {std::string("-"), TokenType::SUBSTRACT, line, column, filename};
+            }
+            break;
+
+        case '*':
+            currentChar = readNextChar();
+            if (currentChar == '=') {
+                token = {std::string("*="), TokenType::MUL_ASSIGN, line, column, filename};
+            } else {
+                token = {std::string("*"), TokenType::MULTIPLY, line, column, filename};
+                currentChar = readNextChar();
+            }
+            break;
+
+        case '/':
+            currentChar = readNextChar();
+            if (currentChar == '=') {
+                token = {std::string("/="), TokenType::DIV_ASSIGN, line, column, filename};
+            } else {
+                token = {std::string("/"), TokenType::DIVIDE, line, column, filename};
+                currentChar = readNextChar();
+            }
+            break;
+
+        case '%': token = {std::string(1, currentChar), TokenType::MODULE, line, column, filename}; break;
+
+        case '.': token = {std::string(1, currentChar), TokenType::DOT, line, column, filename}; break;
 
         default: {
             token = {std::string(1, currentChar), TokenType::ILLEGAL, line, column, filename};
-
-            // Si tenemos el final del archivo, entonces asignamos el token
             if (currentChar == EOF) {
                 token = {std::string(1, currentChar), TokenType::EOFF, line, column, filename};
             }
         }
     }
 
-    currentChar = readNextChar();
+    currentChar = readNextChar(); // Leemos el siguiente carácter
     return token;
 }
 
 // Identifica y crea tokens para identificadores o palabras clave
 Token FluxLexer::makeIdentifierOrKeyword() {
-
-    // Para guardar el string del identifier
     std::string lexeme(1, currentChar);
-
-    // Mientras se un caracter y (contenga numero o _), iteramos...
     while (std::isalnum(currentChar) || currentChar == '_') {
         currentChar = readNextChar();
 
@@ -145,39 +190,60 @@ Token FluxLexer::makeIdentifierOrKeyword() {
         }
     }
 
-    // se construye la cadena y se le asiga el tipo identifier por default
     TokenType type = TokenType::IDENTIFIER;
 
-    // Ahora, evaluamos si el token formado, coincide con alguna de las palabras reservadas
-    if (lexeme == "if") type = TokenType::IF;
-    else if (lexeme == "elseif") type = TokenType::ELSEIF;
-    else if (lexeme == "else") type = TokenType::ELSE;
-    else if (lexeme == "for") type = TokenType::FOR;
-    else if (lexeme == "while") type = TokenType::WHILE;
-    else if (lexeme == "break") type = TokenType::BREAK;
-    else if (lexeme == "continue") type = TokenType::CONTINUE;
-    else if (lexeme == "pass") type = TokenType::PASS;
-    else if (lexeme == "try") type = TokenType::TRY;
-    else if (lexeme == "catch") type = TokenType::CATCH;
-    else if (lexeme == "finally") type = TokenType::FINALLY;
-    else if (lexeme == "throw") type = TokenType::THROW;
-
-    else if (lexeme == "func") type = TokenType::FUNC;
-    else if (lexeme == "return") type = TokenType::RETURN;
-    else if (lexeme == "lambda") type = TokenType::LAMBDA;
-
-    else if (lexeme == "const") type = TokenType::CONST;
-    else if (lexeme == "number") type = TokenType::VAR_NUMBER;
-    else if (lexeme == "string") type = TokenType::VAR_STRING;
-    else if (lexeme == "bool") type = TokenType::VAR_BOOLEAN;
-    else if (lexeme == "true") type = TokenType::TRUE;
-    else if (lexeme == "false") type = TokenType::FALSE;
-
-    else if (lexeme == "and") type = TokenType::AND;
-    else if (lexeme == "or") type = TokenType::OR;
-
-    Token token = {lexeme, type, line, column, filename};
-    return token;
+    if (lexeme == "if") {
+        type = TokenType::IF;
+    } else if (lexeme == "elseif") {
+        type = TokenType::ELSEIF;
+    } else if (lexeme == "else") {
+        type = TokenType::ELSE;
+    } else if (lexeme == "for") {
+        type = TokenType::FOR;
+    } else if (lexeme == "while") {
+        type = TokenType::WHILE;
+    } else if (lexeme == "break") {
+        type = TokenType::BREAK;
+    } else if (lexeme == "continue") {
+        type = TokenType::CONTINUE;
+    } else if (lexeme == "pass") {
+        type = TokenType::PASS;
+    } else if (lexeme == "try") {
+        type = TokenType::TRY;
+    } else if (lexeme == "catch") {
+        type = TokenType::CATCH;
+    } else if (lexeme == "finally") {
+        type = TokenType::FINALLY;
+    } else if (lexeme == "throw") {
+        type = TokenType::THROW;
+    } else if (lexeme == "func") {
+        type = TokenType::FUNC;
+    } else if (lexeme == "return") {
+        type = TokenType::RETURN;
+    } else if (lexeme == "lambda") {
+        type = TokenType::LAMBDA;
+    } else if (lexeme == "const") {
+        type = TokenType::CONST;
+    } else if (lexeme == "number") {
+        type = TokenType::VAR_NUMBER;
+    } else if (lexeme == "string") {
+        type = TokenType::VAR_STRING;
+    } else if (lexeme == "bool") {
+        type = TokenType::VAR_BOOLEAN;
+    } else if (lexeme == "true") {
+        type = TokenType::TRUE;
+    } else if (lexeme == "false") {
+        type = TokenType::FALSE;
+    } else if (lexeme == "and") {
+        type = TokenType::AND;
+    } else if (lexeme == "or") {
+        type = TokenType::OR;
+    } else if (lexeme == "class") {
+        type = TokenType::CLASS;
+    } else if (lexeme == "super") {
+        type = TokenType::SUPER;
+    }
+    return Token{lexeme, type, line, column, filename};
 }
 
 // Identifica y crea tokens para números enteros y decimales
@@ -189,45 +255,40 @@ Token FluxLexer::makeNumber() {
         if (currentChar == '.') {
             if (hasDecimal) break;
             hasDecimal = true;
-            lexeme += currentChar;
         }
-
+        lexeme += currentChar;
         currentChar = readNextChar();
-
-        if (std::isdigit(currentChar)) {
-            lexeme += currentChar;
-        }
     }
 
     return Token{lexeme, TokenType::NUMBER, line, column, filename};
 }
 
-
 // Identifica y crea tokens para cadenas de texto
 Token FluxLexer::makeString() {
-    std::string lexeme(1, currentChar);
+    std::string lexeme(1, currentChar);  // Start with the opening quote
+    currentChar = readNextChar();
 
-    while (true) {
-        currentChar = readNextChar();
+    while (currentChar != '"' && !isEOF()) {
         lexeme += currentChar;
-
-        if (lexeme.back() == '"') {
-            currentChar = readNextChar();
-            break;
-        }
+        currentChar = readNextChar();
     }
+
+    lexeme += '"';
+
+    currentChar = readNextChar();
 
     return Token{lexeme, TokenType::STRING, line, column, filename};
 }
 
 // Omite espacios en blanco y saltos de línea
 void FluxLexer::skipWhitespace() {
-    while (std::isspace(currentChar)) {
-        if (currentChar == '\n') {
-            // Salto de linea natural
+    while (std::isspace(currentChar) || currentChar == '\r') {
+        if (currentChar == '\n' || currentChar == '\r') {
             line++;
             column = 0;
         }
         currentChar = readNextChar();
     }
 }
+
+
