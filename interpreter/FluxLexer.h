@@ -25,14 +25,11 @@ private:
     bool isFluxFile();
     bool isEOF();
     char readNextChar();
-    char readNextOp();
     Token nextToken();
     Token makeIdentifierOrKeyword();
     Token makeNumber();
     Token makeString();
-    Token makeIdentifier();
-    Token makeKeyword();
-    Token makeOperator();
+    Token makeComment();
     void skipWhitespace();
 };
 

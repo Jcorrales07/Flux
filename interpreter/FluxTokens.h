@@ -81,6 +81,7 @@ enum class TokenType {
     THIS,             // Para hacer referencia a la instancia actual
 
     // Otros
+    COMMENT,          // Commentarios
     ILLEGAL,          // Cualquier cosa no reconocida
     EOFF,             // Fin del archivo (End of File)
 };

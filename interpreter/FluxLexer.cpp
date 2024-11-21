@@ -84,7 +84,10 @@ Token FluxLexer::nextToken() {
         return makeNumber();
     } else if (currentChar == '"') {
         return makeString();
+    } else if (currentChar == '/' && fileStream.peek() == '/') {
+        return makeComment();
     }
+
 
     // Operadores y delimitadores
     Token token;
@@ -97,15 +100,29 @@ Token FluxLexer::nextToken() {
         case ']': token = {std::string(1, currentChar), TokenType::RBRACK, line, column, filename}; break;
         case '=':
             // Verificar si es un operador de asignación (== o =)
-                currentChar = readNextChar(); // Leemos el siguiente carácter
+            currentChar = readNextChar(); // Leemos el siguiente carácter
         if (currentChar == '=') {
             token = {std::string("=="), TokenType::EQUAL, line, column, filename}; // Es un "=="
         } else {
             token = {std::string("="), TokenType::ASSIGN, line, column, filename}; // Es un "="
         }
         break;
-        case '>': token = {std::string(1, currentChar), TokenType::GREATER, line, column, filename}; break;
-        case '<': token = {std::string(1, currentChar), TokenType::LESS, line, column, filename}; break;
+        case '>':
+            currentChar = readNextChar(); // Leemos el siguiente carácter
+            if (currentChar == '=') {
+                token = {std::string(">="), TokenType::GREATER_EQUAL, line, column, filename}; // Es un "=="
+            } else {
+                token = {std::string(">"), TokenType::GREATER, line, column, filename}; // Es un "="
+            }
+            break;
+        case '<':
+            currentChar = readNextChar(); // Leemos el siguiente carácter
+            if (currentChar == '=') {
+                token = {std::string("<="), TokenType::LESS_EQUAL, line, column, filename}; // Es un "<="
+            } else {
+                token = {std::string(1, currentChar), TokenType::LESS, line, column, filename}; // Es un "<"
+            }
+        break;
         case ',': token = {std::string(1, currentChar), TokenType::COMMA, line, column, filename}; break;
         case '!':
             currentChar = readNextChar();
@@ -253,31 +270,91 @@ Token FluxLexer::makeNumber() {
 
     while (std::isdigit(currentChar) || currentChar == '.') {
         if (currentChar == '.') {
-            if (hasDecimal) break;
-            hasDecimal = true;
+            if (std::isdigit(fileStream.peek())) {
+                if (hasDecimal) break;
+                hasDecimal = true;
+            } else {
+                std::ostringstream errorMessage;
+                errorMessage << "Unexpected number '" << lexeme
+                             << "' at line: " << line
+                             << ", column: " << column
+                             << " in file: " << filename;
+
+                throw std::runtime_error(errorMessage.str());
+            }
         }
-        lexeme += currentChar;
         currentChar = readNextChar();
+        lexeme += currentChar;
     }
 
     return Token{lexeme, TokenType::NUMBER, line, column, filename};
 }
 
-// Identifica y crea tokens para cadenas de texto
+// Identifica y crea tokens para cadenas de texto QUE SEA CON UN REGEX MEJOR
 Token FluxLexer::makeString() {
-    std::string lexeme(1, currentChar);  // Start with the opening quote
+    char openingQuote = currentChar;  // Puede ser " o '
+    std::string lexeme;
+    lexeme += openingQuote;
+
+    // Avanzar al siguiente carácter después de la comilla inicial
     currentChar = readNextChar();
 
-    while (currentChar != '"' && !isEOF()) {
-        lexeme += currentChar;
+    bool isEscaped = false;
+    while (!isEOF()) {
+        // Manejar caracteres escapados
+        if (isEscaped) {
+            lexeme += currentChar;
+            isEscaped = false;
+        }
+            // Manejar caracteres de escape
+        else if (currentChar == '\\') {
+            lexeme += currentChar;
+            isEscaped = true;
+        }
+            // Verificar cierre de cadena
+        else if (currentChar == openingQuote) {
+            lexeme += currentChar;
+            currentChar = readNextChar();
+            break;
+        }
+            // Agregar caracteres normales
+        else {
+            lexeme += currentChar;
+        }
+
         currentChar = readNextChar();
     }
 
-    lexeme += '"';
+    // Manejar error si no se cierra la cadena
+    if (isEOF() && currentChar != openingQuote) {
+        // Podrías lanzar un error o manejar esto según tu estrategia de manejo de errores
+//        throw std::runtime_error("Unterminated string literal");
 
-    currentChar = readNextChar();
+        std::ostringstream errorMessage;
+        errorMessage << "Unterminated string literal"
+                     << " at line: " << line
+                     << ", column: " << column
+                     << " in file: " << filename;
+
+        throw std::runtime_error(errorMessage.str());
+    }
 
     return Token{lexeme, TokenType::STRING, line, column, filename};
+}
+
+// Función para reconocer comentarios de línea
+Token FluxLexer::makeComment() {
+    std::string lexeme = "//";  // Comenzamos con los caracteres de inicio de comentario
+
+    currentChar = readNextChar(); // saltamos el 2do '/'
+    // Continúa leyendo caracteres hasta encontrar un salto de línea o fin de archivo
+    while (!isEOF() && currentChar != '\n' && currentChar != '\r') {
+        currentChar = readNextChar();
+        lexeme += currentChar;
+    }
+
+    // No incrementamos el contador de línea aquí, ya que skipWhitespace() lo hará
+    return Token{lexeme, TokenType::COMMENT, line, column, filename};
 }
 
 // Omite espacios en blanco y saltos de línea

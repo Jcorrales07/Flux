@@ -1,0 +1,130 @@
+class Persona {
+    string name;
+    number age;
+
+    Persona(nombre, edad) {
+        this.name;
+        this.age;
+    }
+
+    void func saludar() {
+        print("Hola, que tal? Mi nombre es " + this.name);
+    }
+
+    string func getName() {
+        return this.name;
+    }
+
+    number func getAge() {
+        return this.age;
+    }
+
+    void func setAge() {
+        this.age += 1;
+    }
+}
+
+
+class Empleado extends Persona {
+    number salary;
+    string jobPosition;
+
+    Empleado(name, age, salary, jobPosition) {
+        super(name, age);
+        this.salary = salary;
+        this.jobPosition = jobPosition;
+    }
+
+    number func getSalary() {
+        return this.salary;
+    }
+
+    void func setSalary(newSalary) {
+        this.salary = newSalary;
+    }
+}
+
+
+
+
+// for valor in secuencia
+string nombres = ["Joe", "Daniel", "Camila", "Sergio"];
+
+for (n in nombres) {
+    print(n);
+}
+
+
+// for
+for (x in range(3, 69)) {
+    print(contador);
+}
+
+
+string func saludarA(nombre) {
+    return "Hola " + nombre;
+}
+
+number func calcularEdadEn(annioInicial, annioFuturo) {
+    return annioFuturo - annioInicial;
+}
+
+bool func esMayorDeEdad(annioNacimiento, annioActual) {
+    return (annioActual - annioNacimiento) > 18;
+}
+
+// Hace falta las funciones que retornan objetos de clases
+
+
+// Las condiciones deben soportar:
+// Comparaciones y valores booleanas
+
+number edad = 25;
+
+if (edad == 15) {
+    print("15");
+} elseif (edad >= 20) {
+    print("mayor de edad");
+} else {
+    print("Sepa");
+}
+
+
+// Cadenas de texto
+string nombre = "Joe Corrales";
+
+// Caracteres
+string inicial = "J";
+
+// Numero enteros
+number edad = 20;
+
+// Numero decimal
+number millaje = 10523.45;
+
+// Numeros constantes
+const number PI = 3.1416;
+
+// Booleanos
+bool mayorEdad = true;
+bool puedePasar = false;
+
+
+// ARREGLOS
+string nombres = ["Joe", "Daniel", "Camila", "Sergio"];
+number edades = [20, 20, 24, 23];
+
+number contador = 0;
+while (contador >= 10) {
+    print(contador);
+    contador += 1;
+}
+
+while (true) {
+    contador += 1;
+
+    if (contador == 369) {
+        print(contador);
+        break;
+    }
+}
