@@ -41,9 +41,9 @@ NUMBER_VAR   : 'number';
 STRING_VAR   : 'string';
 BOOLEAN_VAR  : 'bool';
 
-UPPERCASE_IDENTIFIER: [A-Z][A-Z0-9_]*;  // Para constantes
-CLASS_IDENTIFIER: [A-Z][a-zA-Z0-9_]*;
-IDENTIFIER   : [a-zA-Z_][a-zA-Z0-9_]*;
+UPPERCASE_IDENTIFIER    : [A-Z][A-Z0-9_]*;  // Para constantes
+CLASS_IDENTIFIER        : [A-Z][a-zA-Z0-9_]*;
+IDENTIFIER              : [a-zA-Z_][a-zA-Z0-9_]*;
 
 PRINT_FUNC: 'print';
 RANGE_FUNC: 'range';

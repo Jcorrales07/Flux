@@ -28,8 +28,10 @@ export class Persona {
     }
 }
 
-export number func calcularBitcoing() {
+export number func calcularBitcoin() {
     return 94909.42;
 }
+
+export const number PI = 3.1416;
 
 Persona persona = new Persona("Joe", 20);

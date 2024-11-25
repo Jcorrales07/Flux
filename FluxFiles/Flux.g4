@@ -3,9 +3,7 @@ options { tokenVocab=FluxLexer; }
 
 // Programa principal
 program
-    : (declaration
-    | statement
-    | funcCall)* EOF
+    : importDeclaration* (declaration | statement | funcCall)* EOF
     ;
 
 // Declaraciones
@@ -13,7 +11,31 @@ declaration
     : constDeclaration
     | varDeclaration
     | funcDeclaration
-    | classDeclaration  // New rule for class declarations
+    | classDeclaration
+    | importDeclaration
+    | exportDeclaration
+    ;
+
+//Import Declaration
+importDeclaration
+    : 'from' IDENTIFIER 'import' importList ';'
+    ;
+
+importList
+    : (importItem) (',' importItem)*
+    ;
+
+importItem
+    : (UPPERCASE_IDENTIFIER | CLASS_IDENTIFIER | IDENTIFIER)
+    ;
+
+//Export Declaration
+exportDeclaration
+    : 'export' (
+        classDeclaration
+        | funcDeclaration
+        | constDeclaration
+    )
     ;
 
 // Class Declaration
