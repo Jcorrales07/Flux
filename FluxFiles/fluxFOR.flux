@@ -8,7 +8,7 @@ for (n in nombres) {
 }
 
 
-// for
+// for en el rango
 for (x in range(3, 69)) {
     print(contador);
 }

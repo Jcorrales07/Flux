@@ -3,30 +3,47 @@ lexer grammar FluxLexer;
 CLASS        : 'class';
 MODULE       : 'module';
 STRUCT       : 'struct';
+
 PUBLIC       : 'public:';
 PRIVATE      : 'private:';
+
 FUNC         : 'func';
 RETURN       : 'return';
+
 IF           : 'if';
 ELSEIF       : 'elseif';
 ELSE         : 'else';
+
 WHILE        : 'while';
+DO           : 'do';
+BREAK        : 'break';
+CONTINUE     : 'continue';
+
 FOR          : 'for';
+IN           : 'in';
+
 SWITCH       : 'switch';
 CASE         : 'case';
 DEFAULT      : 'default';
+
 TRY          : 'try';
 CATCH        : 'catch';
 FINALLY      : 'finally';
+
 IMPORT       : 'import';
 FROM         : 'from';
+
 CONST        : 'const';
 NUMBER_VAR   : 'number';
 STRING_VAR   : 'string';
 BOOLEAN_VAR  : 'bool';
-VOID_VAR     : 'void';
-IDENTIFIER   : [a-zA-Z_][a-zA-Z0-9_]*;
+
+UPPERCASE_IDENTIFIER: [A-Z][A-Z0-9_]*;  // Para constantes
 CLASS_IDENTIFIER: [A-Z][a-zA-Z0-9_]*;
+IDENTIFIER   : [a-zA-Z_][a-zA-Z0-9_]*;
+
+PRINT_FUNC: 'print';
+RANGE_FUNC: 'range';
 
 ASSIGN       : '=';
 ADD_ASSIGN   : '+=';
