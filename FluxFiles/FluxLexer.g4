@@ -1,11 +1,17 @@
 lexer grammar FluxLexer;
 
 CLASS        : 'class';
-MODULE       : 'module';
-STRUCT       : 'struct';
+EXTENDS      : 'extends';
+PUBLIC       : 'public';
+PRIVATE      : 'private';
+SUPER        : 'super';
+THIS         : 'this';
 
-PUBLIC       : 'public:';
-PRIVATE      : 'private:';
+EXPORT       : 'export';
+IMPORT       : 'import';
+FROM         : 'from';
+
+STRUCT       : 'struct';
 
 FUNC         : 'func';
 RETURN       : 'return';
@@ -29,9 +35,6 @@ DEFAULT      : 'default';
 TRY          : 'try';
 CATCH        : 'catch';
 FINALLY      : 'finally';
-
-IMPORT       : 'import';
-FROM         : 'from';
 
 CONST        : 'const';
 NUMBER_VAR   : 'number';

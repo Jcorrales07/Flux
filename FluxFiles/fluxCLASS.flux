@@ -1,45 +1,35 @@
-class Persona {
-    string name;
-    number age;
+export class Persona {
+    public {
+        string name;
+        number age;
 
-    Persona(nombre, edad) {
-        this.name;
-        this.age;
+        Persona(string nombre, number edad) {
+            this.name = nombre;
+            this.age = edad;
+        }
+
+        func saludar() {
+            print("Hola, que tal? Mi nombre es " + this.name);
+        }
+
+        string func getName() {
+            return this.name;
+        }
     }
 
-    void func saludar() {
-        print("Hola, que tal? Mi nombre es " + this.name);
-    }
+    private {
+        number func getAge() {
+            return this.age;
+        }
 
-    string func getName() {
-        return this.name;
-    }
-
-    number func getAge() {
-        return this.age;
-    }
-
-    void func setAge() {
-        this.age += 1;
-    }
-}
-
-
-class Empleado extends Persona {
-    number salary;
-    string jobPosition;
-
-    Empleado(name, age, salary, jobPosition) {
-        super(name, age);
-        this.salary = salary;
-        this.jobPosition = jobPosition;
-    }
-
-    number func getSalary() {
-        return this.salary;
-    }
-
-    void func setSalary(newSalary) {
-        this.salary = newSalary;
+        func setAge() {
+            this.age += 1; // soportar esto
+        }
     }
 }
+
+export number func calcularBitcoing() {
+    return 94909.42;
+}
+
+Persona persona = new Persona("Joe", 20);

@@ -13,6 +13,61 @@ declaration
     : constDeclaration
     | varDeclaration
     | funcDeclaration
+    | classDeclaration  // New rule for class declarations
+    ;
+
+// Class Declaration
+classDeclaration
+    : 'class' CLASS_IDENTIFIER
+      ('extends' CLASS_IDENTIFIER)?  // Optional inheritance
+      '{'
+        (publicBlock)?
+        (privateBlock)?
+      '}'
+    ;
+
+// Public Block in Class
+publicBlock
+    : 'public' '{'
+        (varDeclaration
+        | constructorDeclaration
+        | methodDeclaration)*
+      '}'
+    ;
+
+// Private Block in Class
+privateBlock
+    : 'private' '{'
+        (varDeclaration
+        | constructorDeclaration
+        | methodDeclaration)*
+      '}'
+    ;
+
+// Constructor Declaration
+constructorDeclaration
+    : CLASS_IDENTIFIER '(' paramList? ')'
+      '{'
+        (constructorInitStatement
+        | assignmentStatement
+        | superCall)*
+      '}'
+    ;
+
+// Super Constructor Call
+superCall
+    : 'super' '(' (expr (',' expr)*)? ')' ';'
+    ;
+
+// Constructor Initialization Statement
+constructorInitStatement
+    : 'this' '.' IDENTIFIER '=' expr ';'
+    ;
+
+// Method Declaration with optional return type
+methodDeclaration
+    : type 'func' IDENTIFIER '(' paramList? ')' block
+    | 'func' IDENTIFIER '(' paramList? ')' block
     ;
 
 constDeclaration
@@ -59,7 +114,6 @@ continueStatement
     : 'continue' ';'
     ;
 
-
 // For loop statements
 forStatement
     : 'for' '(' IDENTIFIER 'in' forRange ')' block
@@ -87,6 +141,7 @@ block
 
 assignmentStatement
     : IDENTIFIER assignOp expr ';'
+    | THIS '.' IDENTIFIER assignOp expr ';'
     ;
 
 arrayAssignmentStatement
@@ -126,7 +181,7 @@ arithmeticOp
     | '-'
     | '*'
     | '/'
-    | POWER
+    | '**'
     | '%'
     ;
 
@@ -158,8 +213,14 @@ notExpr
     : NOT expr
     ;
 
+// Class Instantiation
+classInstantiation
+    : CLASS_IDENTIFIER '(' (expr (',' expr)*)? ')'
+    ;
+
 term
     : factor
+    | THIS ('.' IDENTIFIER)?
     ;
 
 factor
@@ -172,6 +233,7 @@ factor
     | funcCall
     | builtInCall        // Agregado: llamadas a funciones built-in
     | '(' expr ')'
+    | classInstantiation
     ;
 
 // Funciones
