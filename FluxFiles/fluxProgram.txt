@@ -2,9 +2,9 @@ class Persona {
     string name;
     number age;
 
-    Persona(nombre, edad) {
-        this.name;
-        this.age;
+    Persona(string nombre, string edad) {
+        this.name = nombre;
+        this.age = edad;
     }
 
     void func saludar() {

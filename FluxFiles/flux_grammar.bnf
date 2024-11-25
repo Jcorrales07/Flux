@@ -1,0 +1,65 @@
+program ::= (statement | declaration | function | class | control)*
+
+declaration ::= type identifier "=" expression ";"
+type ::= "number" | "string" | "bool"
+
+class ::= "class" identifier "{" class_body "}"
+class_body ::= (visibility ":" member_declaration)*
+
+visibility ::= "public" | "private"
+member_declaration ::= type identifier ";"
+                     | function_declaration
+                     | constructor
+
+constructor ::= identifier "(" parameter_list ")" "{" statement* "}"
+
+function ::= "void" "func" identifier "(" parameter_list ")" "{" statement* "}"
+function_call ::= identifier "(" argument_list ")" ";"
+
+parameter_list ::= [type identifier ("," type identifier)*]
+argument_list ::= [expression ("," expression)*]
+
+control ::= if_statement
+          | while_loop
+          | for_loop
+          | switch_statement
+          | try_catch_finally
+
+if_statement ::= "if" "(" expression ")" "{" statement* "}"
+                 ["elseif" "(" expression ")" "{" statement* "}"]*
+                 ["else" "{" statement* "}"]
+
+while_loop ::= "while" "(" expression ")" "{" statement* "}"
+
+for_loop ::= "for" "(" type identifier "=" expression ";" expression ";" expression ")" "{" statement* "}"
+            | "for" "(" type identifier "in" identifier ")" "{" statement* "}"
+
+switch_statement ::= "switch" "(" expression ")" "{" case_clause* default_clause "}"
+case_clause ::= "case" literal ":" statement* "break" ";"
+default_clause ::= "default" ":" statement*
+
+try_catch_finally ::= "try" "{" statement* "}"
+                     "catch" "(" type identifier ")" "{" statement* "}"
+                     ["finally" "{" statement* "}"]
+
+expression ::= literal
+             | identifier
+             | binary_expression
+             | function_call
+             | array_access
+
+binary_expression ::= expression binary_operator expression
+binary_operator ::= "+" | "-" | "*" | "/" | "==" | "!=" | "<" | ">" | "<=" | ">=" | "&&" | "||"
+
+array_access ::= identifier "[" expression "]"
+
+array_declaration ::= type identifier "=" "[" literal ("," literal)* "]" ";"
+
+literal ::= number_literal | string_literal | boolean_literal
+number_literal ::= digit+
+string_literal ::= '"' character* '"'
+boolean_literal ::= "true" | "false"
+
+statement ::= declaration | control | function_call | assignment | "break" ";"
+assignment ::= identifier "=" expression ";"
+identifier ::= letter (letter | digit | "_")*
