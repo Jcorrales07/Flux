@@ -20,8 +20,5 @@ func calcular_edad() {}
 
 for (number i = 0 i > contador) {}
 
-for
-
-
 123 tengo_EstaVariable_que123123funciona_muy buen
 

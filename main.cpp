@@ -5,7 +5,7 @@
 #include <vector>
 
 int main(int argc, char** argv) {
-    std::string file = "../FluxFiles/fluxIF.flux";  // Default file path
+    std::string file = "../fluxProgram.flux";  // Default file path
 
     // Check if the user provided a file as a command-line argument
     if (argc > 1) {
