@@ -5,10 +5,9 @@
 #include <filesystem>
 #include <iostream>
 #include <unordered_map>
+#include <regex>
 
 using std::pmr::unordered_map;
-
-// Todo: Falta trabajar la parte de aumentar las columnas y filas
 
 // Constructor: abre el archivo y verifica si es .flux
 FluxLexer::FluxLexer(const std::string &filename) : filename(filename) {
@@ -84,10 +83,9 @@ Token FluxLexer::nextToken() {
         return makeNumber();
     } else if (currentChar == '"') {
         return makeString();
-    } else if (currentChar == '/' && fileStream.peek() == '/') {
+    } else if (currentChar == '/' && (fileStream.peek() == '/' || fileStream.peek() == '*')) {
         return makeComment();
     }
-
 
     // Operadores y delimitadores
     Token token;
@@ -101,11 +99,11 @@ Token FluxLexer::nextToken() {
         case '=':
             // Verificar si es un operador de asignación (== o =)
             currentChar = readNextChar(); // Leemos el siguiente carácter
-        if (currentChar == '=') {
-            token = {std::string("=="), TokenType::EQUAL, line, column, filename}; // Es un "=="
-        } else {
-            token = {std::string("="), TokenType::ASSIGN, line, column, filename}; // Es un "="
-        }
+            if (currentChar == '=') {
+                token = {std::string("=="), TokenType::EQUAL, line, column, filename}; // Es un "=="
+            } else {
+                token = {std::string("="), TokenType::ASSIGN, line, column, filename}; // Es un "="
+            }
         break;
         case '>':
             currentChar = readNextChar(); // Leemos el siguiente carácter
@@ -130,7 +128,6 @@ Token FluxLexer::nextToken() {
             token = {std::string("!="), TokenType::NOT_EQUAL, line, column, filename}; // Es un "!="
         } else {
             token = {std::string("!"), TokenType::NOT, line, column, filename}; // Es un "!"
-            currentChar = readNextChar(); // Revertimos al siguiente carácter
         }
         break;
         case ';': token = {std::string(1, currentChar), TokenType::SEMICOLON, line, column, filename}; break;
@@ -144,7 +141,7 @@ Token FluxLexer::nextToken() {
                 token = {std::string("+="), TokenType::ADD_ASSIGN, line, column, filename};
             } else if (currentChar == ';'){
                 token = {std::string("="), TokenType::SEMICOLON, line, column, filename};
-            }else {
+            } else {
                 token = {std::string("+"), TokenType::ADD, line, column, filename};
             }
             break;
@@ -164,9 +161,10 @@ Token FluxLexer::nextToken() {
             currentChar = readNextChar();
             if (currentChar == '=') {
                 token = {std::string("*="), TokenType::MUL_ASSIGN, line, column, filename};
+            } else if  (currentChar == '*') {
+                token = {std::string("**"), TokenType::POWER, line, column, filename};
             } else {
                 token = {std::string("*"), TokenType::MULTIPLY, line, column, filename};
-                currentChar = readNextChar();
             }
             break;
 
@@ -176,11 +174,10 @@ Token FluxLexer::nextToken() {
                 token = {std::string("/="), TokenType::DIV_ASSIGN, line, column, filename};
             } else {
                 token = {std::string("/"), TokenType::DIVIDE, line, column, filename};
-                currentChar = readNextChar();
             }
             break;
 
-        case '%': token = {std::string(1, currentChar), TokenType::MODULE, line, column, filename}; break;
+        case '%': token = {std::string(1, currentChar), TokenType::MOD, line, column, filename}; break;
 
         case '.': token = {std::string(1, currentChar), TokenType::DOT, line, column, filename}; break;
 
@@ -209,14 +206,35 @@ Token FluxLexer::makeIdentifierOrKeyword() {
 
     TokenType type = TokenType::IDENTIFIER;
 
+    // Expresiones regulares para identificar el tipo de identificador
+    std::regex uppercaseRegex("^[A-Z][A-Z0-9_]*$");
+    std::regex classRegex("^[A-Z][a-zA-Z0-9_]*$");
+    std::regex identifierRegex("^[a-zA-Z_][a-zA-Z0-9_]*$");
+
+    if (std::regex_match(lexeme, uppercaseRegex)) {
+        type = TokenType::UPPERCASE_IDENTIFIER;
+    } else if (std::regex_match(lexeme, classRegex)) {
+        type = TokenType::CLASS_IDENTIFIER;
+    } else if (!std::regex_match(lexeme, identifierRegex)) {
+        type = TokenType::ILLEGAL; // Si no coincide con ningún identificador válido
+    }
+
     if (lexeme == "if") {
         type = TokenType::IF;
     } else if (lexeme == "elseif") {
         type = TokenType::ELSEIF;
     } else if (lexeme == "else") {
         type = TokenType::ELSE;
+    } else if (lexeme == "switch") {
+        type = TokenType::SWITCH;
+    } else if (lexeme == "case") {
+        type = TokenType::CASE;
+    } else if (lexeme == "default") {
+        type = TokenType::DEFAULT;
     } else if (lexeme == "for") {
         type = TokenType::FOR;
+    } else if (lexeme == "in") {
+        type = TokenType::IN;
     } else if (lexeme == "while") {
         type = TokenType::WHILE;
     } else if (lexeme == "break") {
@@ -259,7 +277,24 @@ Token FluxLexer::makeIdentifierOrKeyword() {
         type = TokenType::CLASS;
     } else if (lexeme == "super") {
         type = TokenType::SUPER;
+    } else if (lexeme == "extends") {
+        type = TokenType::EXTENDS;
+    } else if (lexeme == "public") {
+        type = TokenType::PUBLIC;
+    } else if (lexeme == "private") {
+        type = TokenType::PRIVATE;
+    } else if (lexeme == "new") {
+        type = TokenType::NEW;
+    } else if (lexeme == "this") {
+        type = TokenType::THIS;
+    } else if (lexeme == "export") {
+        type = TokenType::EXPORT;
+    } else if (lexeme == "import") {
+        type = TokenType::IMPORT;
+    } else if (lexeme == "from") {
+        type = TokenType::FROM;
     }
+
     return Token{lexeme, type, line, column, filename};
 }
 
@@ -273,6 +308,7 @@ Token FluxLexer::makeNumber() {
             if (std::isdigit(fileStream.peek())) {
                 if (hasDecimal) break;
                 hasDecimal = true;
+                lexeme += currentChar;
             } else {
                 std::ostringstream errorMessage;
                 errorMessage << "Unexpected number '" << lexeme
@@ -284,7 +320,9 @@ Token FluxLexer::makeNumber() {
             }
         }
         currentChar = readNextChar();
-        lexeme += currentChar;
+        if (std::isalnum(currentChar)) {
+            lexeme += currentChar;
+        }
     }
 
     return Token{lexeme, TokenType::NUMBER, line, column, filename};
@@ -343,19 +381,57 @@ Token FluxLexer::makeString() {
 }
 
 // Función para reconocer comentarios de línea
-Token FluxLexer::makeComment() {
-    std::string lexeme = "//";  // Comenzamos con los caracteres de inicio de comentario
+//Token FluxLexer::makeComment() {
+//    std::string lexeme = "//";  // Comenzamos con los caracteres de inicio de comentario
+//
+//    currentChar = readNextChar(); // saltamos el 2do '/'
+//    // Continúa leyendo caracteres hasta encontrar un salto de línea o fin de archivo
+//    while (!isEOF() && currentChar != '\n' && currentChar != '\r') {
+//        currentChar = readNextChar();
+//        lexeme += currentChar;
+//    }
+//
+//    // No incrementamos el contador de línea aquí, ya que skipWhitespace() lo hará
+//    return Token{lexeme, TokenType::COMMENT, line, column, filename};
+//}
 
-    currentChar = readNextChar(); // saltamos el 2do '/'
-    // Continúa leyendo caracteres hasta encontrar un salto de línea o fin de archivo
-    while (!isEOF() && currentChar != '\n' && currentChar != '\r') {
-        currentChar = readNextChar();
-        lexeme += currentChar;
+Token FluxLexer::makeComment() {
+    std::string lexeme;
+
+    // Verifica si es un comentario de línea
+    if (fileStream.peek() == '/') {
+        lexeme = "/";
+        currentChar = readNextChar(); // saltamos el 2do '/'
+        // Continúa leyendo caracteres hasta encontrar un salto de línea o fin de archivo
+        while (!isEOF() && currentChar != '\n' && currentChar != '\r') {
+            lexeme += currentChar;
+            currentChar = readNextChar();
+        }
+    } else if (fileStream.peek() == '*') { // Verifica si es un comentario de bloque
+        lexeme = "/*";
+        currentChar = readNextChar(); // saltamos el '*'
+        // Continúa leyendo caracteres hasta encontrar el cierre del comentario de bloque `*/`
+        while (!isEOF()) {
+            currentChar = readNextChar();
+            if (currentChar == '\n') {
+                line++; column = 0;
+            } else { column++; }
+
+            lexeme += currentChar;
+
+            if (currentChar == '*' && fileStream.peek() == '/') {
+                lexeme += '/';
+                currentChar = readNextChar(); // saltamos el '/'
+                currentChar = readNextChar(); // pasamos al siguiente token
+                break;
+            }
+        }
+        return Token{lexeme, TokenType::BLOCK_COMMENT, line, column, filename};
     }
 
-    // No incrementamos el contador de línea aquí, ya que skipWhitespace() lo hará
     return Token{lexeme, TokenType::COMMENT, line, column, filename};
 }
+
 
 // Omite espacios en blanco y saltos de línea
 void FluxLexer::skipWhitespace() {

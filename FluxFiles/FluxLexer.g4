@@ -6,6 +6,7 @@ PUBLIC       : 'public';
 PRIVATE      : 'private';
 SUPER        : 'super';
 THIS         : 'this';
+NEW          : 'new';
 
 EXPORT       : 'export';
 IMPORT       : 'import';
@@ -42,8 +43,8 @@ STRING_VAR   : 'string';
 BOOLEAN_VAR  : 'bool';
 
 UPPERCASE_IDENTIFIER    : [A-Z][A-Z0-9_]*;  // Para constantes
-CLASS_IDENTIFIER        : [A-Z][a-zA-Z0-9_]*;
-IDENTIFIER              : [a-zA-Z_][a-zA-Z0-9_]*;
+CLASS_IDENTIFIER        : [A-Z][a-zA-Z0-9_]*; // Para clases
+IDENTIFIER              : [a-zA-Z_][a-zA-Z0-9_]*; // Para variables o funciones
 
 PRINT_FUNC: 'print';
 RANGE_FUNC: 'range';

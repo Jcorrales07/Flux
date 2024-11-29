@@ -1,65 +1,149 @@
-program ::= (statement | declaration | function | class | control)*
+<program> ::= <importDeclaration>* (<declaration> | <statement> | <funcCall>)* EOF
 
-declaration ::= type identifier "=" expression ";"
-type ::= "number" | "string" | "bool"
+<declaration> ::= <constDeclaration>
+                | <varDeclaration>
+                | <funcDeclaration>
+                | <classDeclaration>
+                | <importDeclaration>
+                | <exportDeclaration>
 
-class ::= "class" identifier "{" class_body "}"
-class_body ::= (visibility ":" member_declaration)*
+<importDeclaration> ::= 'from' IDENTIFIER 'import' <importList> ';'
 
-visibility ::= "public" | "private"
-member_declaration ::= type identifier ";"
-                     | function_declaration
-                     | constructor
+<importList> ::= <importItem> (',' <importItem>)*
 
-constructor ::= identifier "(" parameter_list ")" "{" statement* "}"
+<importItem> ::= UPPERCASE_IDENTIFIER
+               | CLASS_IDENTIFIER
+               | IDENTIFIER
 
-function ::= "void" "func" identifier "(" parameter_list ")" "{" statement* "}"
-function_call ::= identifier "(" argument_list ")" ";"
+<exportDeclaration> ::= 'export' (<classDeclaration> | <funcDeclaration> | <constDeclaration>)
 
-parameter_list ::= [type identifier ("," type identifier)*]
-argument_list ::= [expression ("," expression)*]
+<classDeclaration> ::= 'class' CLASS_IDENTIFIER ('extends' CLASS_IDENTIFIER)? '{' (<publicBlock>)? (<privateBlock>)? '}'
 
-control ::= if_statement
-          | while_loop
-          | for_loop
-          | switch_statement
-          | try_catch_finally
+<publicBlock> ::= 'public' '{' (<varDeclaration> | <constructorDeclaration> | <methodDeclaration>)* '}'
 
-if_statement ::= "if" "(" expression ")" "{" statement* "}"
-                 ["elseif" "(" expression ")" "{" statement* "}"]*
-                 ["else" "{" statement* "}"]
+<privateBlock> ::= 'private' '{' (<varDeclaration> | <constructorDeclaration> | <methodDeclaration>)* '}'
 
-while_loop ::= "while" "(" expression ")" "{" statement* "}"
+<constructorDeclaration> ::= CLASS_IDENTIFIER '(' <paramList>? ')' '{' (<constructorInitStatement> | <assignmentStatement> | <superCall>)* '}'
 
-for_loop ::= "for" "(" type identifier "=" expression ";" expression ";" expression ")" "{" statement* "}"
-            | "for" "(" type identifier "in" identifier ")" "{" statement* "}"
+<superCall> ::= 'super' '(' (<expr> (',' <expr>)*)? ')' ';'
 
-switch_statement ::= "switch" "(" expression ")" "{" case_clause* default_clause "}"
-case_clause ::= "case" literal ":" statement* "break" ";"
-default_clause ::= "default" ":" statement*
+<constructorInitStatement> ::= 'this' '.' IDENTIFIER '=' <expr> ';'
 
-try_catch_finally ::= "try" "{" statement* "}"
-                     "catch" "(" type identifier ")" "{" statement* "}"
-                     ["finally" "{" statement* "}"]
+<methodDeclaration> ::= <type> 'func' IDENTIFIER '(' <paramList>? ')' <block>
+                      | 'func' IDENTIFIER '(' <paramList>? ')' <block>
 
-expression ::= literal
-             | identifier
-             | binary_expression
-             | function_call
-             | array_access
+<constDeclaration> ::= 'const' <type> UPPERCASE_IDENTIFIER '=' (<expr> | <arrayLiteral>) ';'
 
-binary_expression ::= expression binary_operator expression
-binary_operator ::= "+" | "-" | "*" | "/" | "==" | "!=" | "<" | ">" | "<=" | ">=" | "&&" | "||"
+<varDeclaration> ::= <type> IDENTIFIER ('=' (<expr> | <arrayLiteral>))? ';'
+                   | <type> IDENTIFIER '=' NEW CLASS_IDENTIFIER '(' (<expr> (',' <expr>)*)? ')' ';'
 
-array_access ::= identifier "[" expression "]"
+<statement> ::= <declaration>
+              | <assignmentStatement>
+              | <arrayAssignmentStatement>
+              | <valueAccess>
+              | <ifStatement>
+              | <forStatement>
+              | <whileStatement>
+              | <doWhileStatement>
+              | <breakStatement>
+              | <continueStatement>
+              | <returnStmt>
+              | <block>
+              | <expr> ';'
 
-array_declaration ::= type identifier "=" "[" literal ("," literal)* "]" ";"
+<whileStatement> ::= 'while' '(' <expr> ')' <block>
 
-literal ::= number_literal | string_literal | boolean_literal
-number_literal ::= digit+
-string_literal ::= '"' character* '"'
-boolean_literal ::= "true" | "false"
+<doWhileStatement> ::= 'do' <block> 'while' '(' <expr> ')' ';'
 
-statement ::= declaration | control | function_call | assignment | "break" ";"
-assignment ::= identifier "=" expression ";"
-identifier ::= letter (letter | digit | "_")*
+<breakStatement> ::= 'break' ';'
+
+<continueStatement> ::= 'continue' ';'
+
+<forStatement> ::= 'for' '(' IDENTIFIER 'in' <forRange> ')' <block>
+
+<forRange> ::= <rangeExpr>
+             | <expr>
+
+<rangeExpr> ::= 'range' '(' <expr> (',' <expr> (',' <expr>)?)? ')'
+
+<builtInCall> ::= 'print' '(' <expr> ')' ';' | <rangeExpr>
+
+<block> ::= '{' <statement>* '}'
+
+<assignmentStatement> ::= IDENTIFIER '=' NEW CLASS_IDENTIFIER '(' (<expr> (',' <expr>)*)? ')' ';'
+                        | IDENTIFIER <assignOp> <expr> ';'
+                        | 'this' '.' IDENTIFIER <assignOp> <expr> ';'
+
+<arrayAssignmentStatement> ::= <arrayAccess> '=' <expr> ';'
+
+<arrayLiteral> ::= '[' (<expr> (',' <expr>)*)? ']'
+
+<arrayAccess> ::= IDENTIFIER '[' <expr> ']'
+                | UPPERCASE_IDENTIFIER '[' <expr> ']'
+
+<ifStatement> ::= 'if' '(' <expr> ')' <block> ('elseif' '(' <expr> ')' <block>)* ('else' <block>)?
+
+<valueAccess> ::= IDENTIFIER '.' (<funcCall> | IDENTIFIER )?
+
+<expr> ::= <expr> <arithmeticOp> <term>
+          | <expr> <compareOp> <term>
+          | <expr> <logicalOp> <term>
+          | <notExpr>
+          | <term>
+
+<arithmeticOp> ::= '+'
+                 | '-'
+                 | '*'
+                 | '/'
+                 | '**'
+                 | '%'
+
+<compareOp> ::= '=='
+               | '!='
+               | '>='
+               | '<='
+               | '>'
+               | '<'
+
+<logicalOp> ::= AND
+               | OR
+
+<assignOp> ::= ASSIGN
+              | ADD_ASSIGN
+              | SUB_ASSIGN
+              | MUL_ASSIGN
+              | DIV_ASSIGN
+
+<notExpr> ::= NOT <expr>
+
+<classInstantiation> ::= CLASS_IDENTIFIER '(' (<expr> (',' <expr>)*)? ')'
+
+<term> ::= <factor>
+          | 'this' ('.' IDENTIFIER)?
+
+<factor> ::= BOOL_LIT
+           | DECIMAL_LIT
+           | INT_LIT
+           | STRING_LIT
+           | IDENTIFIER
+           | <funcCall>
+           | <arrayAccess>
+           | <builtInCall>
+           | <classInstantiation>
+           | '(' <expr> ')'
+
+<funcDeclaration> ::= <type> 'func' IDENTIFIER '(' <paramList>? ')' <block>
+                    | 'func' IDENTIFIER '(' <paramList>? ')' <block>
+
+<funcCall> ::= IDENTIFIER '(' (<expr> (',' <expr>)*)? ')'
+
+<paramList> ::= <param> (',' <param>)*
+
+<param> ::= <type> IDENTIFIER
+
+<returnStmt> ::= 'return' <expr>? ';'
+
+<type> ::= 'number'
+         | 'string'
+         | 'bool'
+         | CLASS_IDENTIFIER

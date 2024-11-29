@@ -14,6 +14,8 @@ enum class TokenType {
     TRUE,             // Valor booleano
     FALSE,            // Valor booleano
     IDENTIFIER,       // Identificadores de las variables, funciones, clases, etc.
+    CLASS_IDENTIFIER,
+    UPPERCASE_IDENTIFIER,
 
     // Operadores de asignación
     ASSIGN,           // Operador de asignación
@@ -28,7 +30,8 @@ enum class TokenType {
     SUBSTRACT,        // -
     MULTIPLY,         // *
     DIVIDE,           // /
-    MODULE,           // %
+    MOD,              // %
+    POWER,            // **
 
     // Operadores de comparación
     LESS,             // <
@@ -59,11 +62,18 @@ enum class TokenType {
     IF,               // if
     ELSEIF,           // elseif
     ELSE,             // else
+
     FOR,              // for
+    IN,               // in
     WHILE,            // while
     BREAK,            // break
     CONTINUE,         // continue
     PASS,             // pass
+
+    SWITCH,
+    CASE,
+    DEFAULT,
+
     TRY,              // try
     CATCH,            // catch
     FINALLY,          // finally
@@ -77,11 +87,19 @@ enum class TokenType {
     // Definición de POO (Programación Orientada a Objetos)
     CLASS,            // Clase
     SUPER,            // Para acceder a la clase padre
+    EXTENDS,          // Para manejar la herencia
+    PUBLIC,           // Para propiedades publicas en la clase
+    PRIVATE,          // Para propiedades privadas en la clase
     NEW,              // Para crear nuevas instancias de clases
     THIS,             // Para hacer referencia a la instancia actual
 
+    EXPORT,
+    IMPORT,
+    FROM,
+
     // Otros
-    COMMENT,          // Commentarios
+    COMMENT,          // Comentarios
+    BLOCK_COMMENT,    // Comentario en bloque
     ILLEGAL,          // Cualquier cosa no reconocida
     EOFF,             // Fin del archivo (End of File)
 };

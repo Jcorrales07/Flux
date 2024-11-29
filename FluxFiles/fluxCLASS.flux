@@ -35,3 +35,6 @@ export number func calcularBitcoin() {
 export const number PI = 3.1416;
 
 Persona persona = new Persona("Joe", 20);
+
+Persona person;
+person = new Persona("maria", 40); 

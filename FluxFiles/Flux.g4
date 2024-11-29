@@ -98,6 +98,7 @@ constDeclaration
 
 varDeclaration
     : type IDENTIFIER ('=' (expr | arrayLiteral))? ';'
+    | type IDENTIFIER '=' NEW CLASS_IDENTIFIER '(' (expr (',' expr)*)? ')' ';'
     ;
 
 // Statements
@@ -105,6 +106,7 @@ statement
     : declaration
     | assignmentStatement
     | arrayAssignmentStatement
+    | valueAccess
     | ifStatement
     | forStatement
     | whileStatement
@@ -162,7 +164,8 @@ block
     ;
 
 assignmentStatement
-    : IDENTIFIER assignOp expr ';'
+    : IDENTIFIER '=' NEW CLASS_IDENTIFIER '(' (expr (',' expr)*)? ')' ';'
+    | IDENTIFIER assignOp expr ';'
     | THIS '.' IDENTIFIER assignOp expr ';'
     ;
 
@@ -186,6 +189,10 @@ ifStatement
     : 'if' '(' expr ')' block
       ('elseif' '(' expr ')' block)*
       ('else' block)?
+    ;
+
+valueAccess
+    : IDENTIFIER '.' (funcCall | IDENTIFIER )?
     ;
 
 // Expresiones

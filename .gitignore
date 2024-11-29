@@ -3,7 +3,8 @@
 
 ### C++ ###
 
-./oldFluxLexer.h
+./antlr-parser/*
+./pruebasANTLR/*
 
 # Prerequisites
 *.d
