@@ -12,7 +12,7 @@
 
 class FluxLexer {
 public:
-    FluxLexer(const std::string &filename);
+    explicit FluxLexer(const std::string &filename);
     std::vector<Token> tokenize();
 
 private:
@@ -20,7 +20,7 @@ private:
     std::string filename;
     int line = 1;
     int column = 0;
-    char currentChar;
+    char currentChar{};
 
     bool isFluxFile();
     bool isEOF();

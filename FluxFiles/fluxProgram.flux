@@ -17,11 +17,6 @@ const number MAX_COUNT = 100;
     o
 **/
 
-/
-/=
-!
-!=
-
 // Declarar una clase
 class Person {
     public {

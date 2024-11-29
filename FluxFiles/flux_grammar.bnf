@@ -35,7 +35,7 @@
 <constDeclaration> ::= 'const' <type> UPPERCASE_IDENTIFIER '=' (<expr> | <arrayLiteral>) ';'
 
 <varDeclaration> ::= <type> IDENTIFIER ('=' (<expr> | <arrayLiteral>))? ';'
-                   | <type> IDENTIFIER '=' NEW CLASS_IDENTIFIER '(' (<expr> (',' <expr>)*)? ')' ';'
+                   | <type> IDENTIFIER '=' 'new' CLASS_IDENTIFIER '(' (<expr> (',' <expr>)*)? ')' ';'
 
 <statement> ::= <declaration>
               | <assignmentStatement>
@@ -70,7 +70,7 @@
 
 <block> ::= '{' <statement>* '}'
 
-<assignmentStatement> ::= IDENTIFIER '=' NEW CLASS_IDENTIFIER '(' (<expr> (',' <expr>)*)? ')' ';'
+<assignmentStatement> ::= IDENTIFIER '=' 'new' CLASS_IDENTIFIER '(' (<expr> (',' <expr>)*)? ')' ';'
                         | IDENTIFIER <assignOp> <expr> ';'
                         | 'this' '.' IDENTIFIER <assignOp> <expr> ';'
 
@@ -105,16 +105,15 @@
                | '>'
                | '<'
 
-<logicalOp> ::= AND
-               | OR
+<logicalOp> ::= 'and' | 'or'
 
-<assignOp> ::= ASSIGN
-              | ADD_ASSIGN
-              | SUB_ASSIGN
-              | MUL_ASSIGN
-              | DIV_ASSIGN
+<assignOp> ::= '='
+              | '+='
+              | '-='
+              | '*='
+              | '/='
 
-<notExpr> ::= NOT <expr>
+<notExpr> ::= '!' <expr>
 
 <classInstantiation> ::= CLASS_IDENTIFIER '(' (<expr> (',' <expr>)*)? ')'
 
@@ -147,3 +146,25 @@
          | 'string'
          | 'bool'
          | CLASS_IDENTIFIER
+
+
+BOOL_LIT ::= 'true' | 'false'
+DECIMAL_LIT ::= <digit>+ '.' <digit>+
+INT_LIT ::= <digit>+
+<digit> ::= '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9'
+
+STRING_LIT ::= '"' <char>* '"'
+IDENTIFIER ::= <letter_or_underscore> <letter_or_digit_or_underscore>*
+UPPERCASE_IDENTIFIER ::= <uppercase_letter> <uppercase_letter_or_digit_or_underscore>
+CLASS_IDENTIFIER ::= <uppercase_letter> <letter_or_digit_or_underscore>*
+
+<letter> ::= 'a' | 'b' | 'c' | 'd' | 'e' | 'f' | 'g' | 'h' | 'i' | 'j' | 'k' | 'l' | 'm' | 'n' | 'o' | 'p' | 'q' | 'r' | 's' | 't' | 'u' | 'v' | 'w' | 'x' | 'y' | 'z' | <uppercase_letter>
+<uppercase_letter> ::= 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G' | 'H' | 'I' | 'J' | 'K' | 'L' | 'M' | 'N' | 'O' | 'P' | 'Q' | 'R' | 'S' | 'T' | 'U' | 'V' | 'W' | 'X' | 'Y' | 'Z'
+<special_char> ::= "!" | "#" | "$" | "%" | "&" | "'" | "(" | ")" | "*" | "+" | "," | "-" | "." | "/" | "\\" | ":" | ";" | "<" | "=" | ">" | "?" | "@" | "["  | "]" | "^" | "_" | "`" | "{" | "|" | "}" | "~"
+<escape_sequence> ::= '\\"' | '\\\\' | '\\n' | '\\t' | '\\r'
+<printable> ::= <letter> | <digit> | <special_char>
+<char> ::= <printable> | ' ' | <escape_sequence>
+
+<letter_or_underscore> ::= <letter> | '_'
+<letter_or_digit_or_underscore> ::= <letter> | <digit> | '_'
+<uppercase_letter_or_digit_or_underscore> ::= <uppercase_letter> | <digit> | '_'

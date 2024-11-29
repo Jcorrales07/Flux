@@ -116,14 +116,3 @@ struct Token {
 };
 
 #endif // FLUX_FLUXTOKENS_H
-
-// NOTAS:
-// THROW: Para lanzar una excepción o error
-// FUNC: Define una función
-// LAMBDA: Funciones anónimas (lambda)
-
-// Nuevos tokens para POO:
-// CLASS: Para definir una clase
-// SUPER: Para acceder a la clase base o padre
-// NEW: Para crear nuevas instancias de clases
-// THIS: Para hacer referencia a la instancia actual
