@@ -30,6 +30,15 @@ private:
     void parseArguments();
     void parseBlock();
     void parseClassBody();
+    void parseThisVariable();
+
+    void parseImportStatement();
+    void parseClassAccess();
+    void parseConstantDeclaration();
+    void parseAccessSpecifier();
+    void parseArray();
+    void parseForLoop();
+    void parseClassConstructor();
 
     std::vector<Function> functions;
 

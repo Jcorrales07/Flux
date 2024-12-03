@@ -28,10 +28,10 @@ int main(int argc, char** argv) {
         }
 
         // Now that we have the tokens, let's parse them
-//        FluxParser parser(tokens);
-//        parser.parse();  // Parse the tokens using the FluxParser
-//
-//        std::cout << "Parsing completed successfully." << std::endl;
+        FluxParser parser(tokens);
+        parser.parse();  // Parse the tokens using the FluxParser
+
+        // std::cout << "Parsing completed successfully." << std::endl;
 
     } catch (const std::exception& e) {
         // Enhanced error handling with more context

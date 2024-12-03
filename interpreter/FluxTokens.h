@@ -10,6 +10,7 @@ enum class TokenType {
     NUMBER,           // Valor numérico
     VAR_STRING,       // Variable de tipo texto
     STRING,           // Valor de texto
+    VOID,             // Sin Valor
     VAR_BOOLEAN,      // Variable de tipo booleano
     TRUE,             // Valor booleano
     FALSE,            // Valor booleano

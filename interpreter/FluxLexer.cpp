@@ -214,6 +214,7 @@ Token FluxLexer::makeIdentifierOrKeyword() {
     if (std::regex_match(lexeme, uppercaseRegex)) {
         type = TokenType::UPPERCASE_IDENTIFIER;
     } else if (std::regex_match(lexeme, classRegex)) {
+        std::cout << lexeme << std::endl;
         type = TokenType::CLASS_IDENTIFIER;
     } else if (!std::regex_match(lexeme, identifierRegex)) {
         type = TokenType::ILLEGAL; // Si no coincide con ningún identificador válido
@@ -294,7 +295,6 @@ Token FluxLexer::makeIdentifierOrKeyword() {
     } else if (lexeme == "from") {
         type = TokenType::FROM;
     }
-
     return Token{lexeme, type, line, column, filename};
 }
 
