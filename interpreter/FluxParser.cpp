@@ -40,9 +40,22 @@ void FluxParser::parse() {
 }
 
 void FluxParser::parseProgram() {
-    std::cout << "Parsing Program...\n";
     while (currentToken.type != TokenType::EOFF) {
+        while (currentToken.type == TokenType::COMMENT || currentToken.type == TokenType::BLOCK_COMMENT) {
+            parseComment();
+        }
         parseStatement();
+    }
+    std::cout << "Done.\n";
+}
+
+void FluxParser::parseComment() {
+    if (currentToken.type == TokenType::COMMENT) {
+        std::cout << "Single-line comment: " << currentToken.lexeme << "\n";
+        consumeToken();
+    } else if (currentToken.type == TokenType::BLOCK_COMMENT) {
+        std::cout << "Block comment: " << currentToken.lexeme << "\n";
+        consumeToken();
     }
 }
 
@@ -90,12 +103,18 @@ void FluxParser::parseStatement() {
                 parseExpression();
                 match(TokenType::SEMICOLON);
             }else if (TokenType::LPAREN == currentToken.type) {
-                match(TokenType::RPAREN);
-                parseArguments();
-                match(TokenType::RPAREN);
-                match(TokenType::LBRACE);
-                parseBlock();
-                match(TokenType::RBRACE);
+                match(TokenType::LPAREN);
+                if (currentToken.type == TokenType::IDENTIFIER) {
+                    parseCallParams();
+                } else {
+                    parseArguments();
+                    match(TokenType::RPAREN);
+                }
+                if (TokenType::LBRACE == currentToken.type) {
+                    match(TokenType::LBRACE);
+                    parseBlock();
+                    match(TokenType::RBRACE);
+                }
             }
         } else if (currentToken.type == TokenType::COMMENT) {
             std::cout << "Single-line comment: " << currentToken.lexeme << "\n";
@@ -121,11 +140,29 @@ void FluxParser::parseStatement() {
         } else if (currentToken.type == TokenType::THIS) {
             std::cout << "Parsing This. Statement...\n";
             parseThisVariable();
-        } else if (currentToken.type == TokenType::BREAK){
+        } else if (currentToken.type == TokenType::BREAK) {
             std::cout << "Parsing Break Statement...\n";
             match(TokenType::BREAK);
             match(TokenType::SEMICOLON);
-        }else {
+        } else if (currentToken.type == TokenType::PRINT) {
+            std::cout << "Parsing Print Statement...\n";
+            match(TokenType::PRINT);
+            match(TokenType::LPAREN);
+            parseCallParams();
+        } else if (currentToken.type == TokenType::COMMENT || currentToken.type == TokenType::BLOCK_COMMENT) {
+            parseComment();
+        } else if (currentToken.type == TokenType::TRY) {
+            std::cout << "Parsing Try Statement...\n";
+            parseTryCatchFinally();
+        } else if (currentToken.type == TokenType::THROW) {
+            std::cout << "Parsing Throw Statement...\n";
+            parseThrow();
+        } else if (currentToken.type == TokenType::ERROR) {
+            std::cout << "Parsing Error Statement...\n";
+            match(TokenType::ERROR);
+            match(TokenType::LPAREN);
+            parseCallParams();
+        } else {
             throw std::runtime_error("Unknown statement type. " + currentToken.lexeme);
         }
     } catch (const std::runtime_error& e) {
@@ -205,10 +242,24 @@ void FluxParser::parseConstantDeclaration() {
     match(TokenType::SEMICOLON);
 }
 
+void FluxParser::parseCallParams() {
+    parseExpression();
+
+    while (currentToken.type == TokenType::COMMA) {
+        consumeToken();
+        parseExpression();
+    }
+
+    match(TokenType::RPAREN);
+    match(TokenType::SEMICOLON);
+}
+
 void FluxParser::parseExpression() {
     parsePrimaryExpression();
     while (currentToken.type == TokenType::ADD || currentToken.type == TokenType::SUBSTRACT || currentToken.type == TokenType::MULTIPLY
-            || currentToken.type == TokenType::DIVIDE || currentToken.type == TokenType::LESS || currentToken.type == TokenType::GREATER) {
+            || currentToken.type == TokenType::DIVIDE || currentToken.type == TokenType::LESS || currentToken.type == TokenType::GREATER
+            || currentToken.type == TokenType::MOD || currentToken.type == TokenType::AND || currentToken.type == TokenType::OR
+            || currentToken.type == TokenType::NOT || currentToken.type == TokenType::POWER) {
         Token op = currentToken;
         consumeToken();
         parsePrimaryExpression();
@@ -314,14 +365,6 @@ void FluxParser::parseClassAccess() {
 }
 
 void FluxParser::parseFunction() {
-    std::cout << "Parsing Function Declaration...\n";
-
-    TokenType varType = currentToken.type;
-    if (varType != TokenType::VAR_NUMBER && varType != TokenType::VAR_STRING && varType != TokenType::VAR_BOOLEAN && varType != TokenType::VOID) {
-        throw std::runtime_error("Expected variable type (VAR_NUMBER, VAR_STRING, VAR_BOOLEAN, VOID).");
-    }
-    consumeToken();
-
     if (currentToken.type != TokenType::FUNC) {
         throw std::runtime_error("Expected 'FUNC' keyword of function definition.");
     }
@@ -372,9 +415,6 @@ void FluxParser::parseFunction() {
     consumeToken();
 
     functions.push_back(Function{functionName, parameters});
-}
-
-void FluxParser::parseConstructorCall() {
 }
 
 void FluxParser::parseArguments() {
@@ -559,4 +599,38 @@ bool FluxParser::isExpressionStart(TokenType type) {
            type == TokenType::LPAREN ||
            type == TokenType::SUBSTRACT ||
            type == TokenType::NOT;
+}
+
+void FluxParser::parseTryCatchFinally() {
+    match(TokenType::TRY);
+    match(TokenType::LBRACE);
+    parseBlock();
+    match(TokenType::RBRACE);
+
+    if (currentToken.type == TokenType::CATCH) {
+        match(TokenType::CATCH);
+        match(TokenType::LPAREN);
+        if (currentToken.type == TokenType::IDENTIFIER) {
+            advance();
+        } else {
+            throw std::runtime_error("Expected exception variable in catch block");
+        }
+        match(TokenType::RPAREN);
+        match(TokenType::LBRACE);
+        parseBlock();
+        match(TokenType::RBRACE);
+    }
+
+    if (currentToken.type == TokenType::FINALLY) {
+        match(TokenType::FINALLY);
+        match(TokenType::LBRACE);
+        parseBlock();
+        match(TokenType::RBRACE);
+    }
+}
+
+void FluxParser::parseThrow() {
+    match(TokenType::THROW);
+    match(TokenType::NEW);
+    parseStatement();
 }

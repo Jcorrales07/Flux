@@ -18,6 +18,9 @@ enum class TokenType {
     CLASS_IDENTIFIER,
     UPPERCASE_IDENTIFIER,
 
+    // Salidas
+    PRINT,
+
     // Operadores de asignación
     ASSIGN,           // Operador de asignación
 
@@ -79,6 +82,7 @@ enum class TokenType {
     CATCH,            // catch
     FINALLY,          // finally
     THROW,            // throw
+    ERROR,
 
     // Definición de funciones
     FUNC,             // Función

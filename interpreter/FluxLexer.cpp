@@ -294,6 +294,10 @@ Token FluxLexer::makeIdentifierOrKeyword() {
         type = TokenType::IMPORT;
     } else if (lexeme == "from") {
         type = TokenType::FROM;
+    } else if (lexeme == "print") {
+        type = TokenType::PRINT;
+    } else if (lexeme == "Error") {
+        type = TokenType::ERROR;
     }
     return Token{lexeme, type, line, column, filename};
 }
