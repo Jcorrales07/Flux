@@ -38,7 +38,10 @@ private:
     void parseAccessSpecifier();
     void parseArray();
     void parseForLoop();
+    void parseWhileLoop();
     void parseClassConstructor();
+    void parseSwitch();
+    bool isExpressionStart(TokenType type);
 
     std::vector<Function> functions;
 

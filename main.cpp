@@ -13,14 +13,10 @@ int main(int argc, char** argv) {
     }
 
     try {
-        // Initialize the lexer with the file
         FluxLexer lexer(file);
-        std::vector<Token> tokens = lexer.tokenize();  // Tokenize the input file
-
-        // Print tokens (optional - could be enabled via a flag)
+        std::vector<Token> tokens = lexer.tokenize();
         std::cout << "Tokens parsed from file: " << file << std::endl;
         for (const auto& token : tokens) {
-            // Print token information (lexeme, type, line, and column)
             std::cout << "Token: " << token.lexeme << "\tType: "
                       << static_cast<int>(token.type)
                       << "\tLine: " << token.line
@@ -30,7 +26,6 @@ int main(int argc, char** argv) {
         // Now that we have the tokens, let's parse them
         FluxParser parser(tokens);
         parser.parse();  // Parse the tokens using the FluxParser
-
         // std::cout << "Parsing completed successfully." << std::endl;
 
     } catch (const std::exception& e) {

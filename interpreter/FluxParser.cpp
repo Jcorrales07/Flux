@@ -1,6 +1,7 @@
 #include "FluxParser.h"
 #include <stdexcept>
 #include <iostream>
+#include <sstream>
 #include <vector>
 #include <string>
 
@@ -83,7 +84,6 @@ void FluxParser::parseStatement() {
         } else if (currentToken.type == TokenType::IDENTIFIER) {
             std::cout << "Parsing Assignment Statement...\n";
             std::string identifier = currentToken.lexeme;
-            std::cout << identifier;
             consumeToken();
             if (TokenType::ASSIGN == currentToken.type) {
                 match(TokenType::ASSIGN);
@@ -111,19 +111,27 @@ void FluxParser::parseStatement() {
             parseImportStatement();
         } else if (currentToken.type == TokenType::WHILE) {
             std::cout << "Parsing While Statement...\n";
+            parseWhileLoop();
         } else if (currentToken.type == TokenType::SWITCH) {
             std::cout << "Parsing Switch Statement...\n";
+            parseSwitch();
         } else if (currentToken.type == TokenType::CLASS_IDENTIFIER){
             std::cout << "Parsing Class Identifier Statement...\n";
             parseClassConstructor();
         } else if (currentToken.type == TokenType::THIS) {
             std::cout << "Parsing This. Statement...\n";
             parseThisVariable();
+        } else if (currentToken.type == TokenType::BREAK){
+            std::cout << "Parsing Break Statement...\n";
+            match(TokenType::BREAK);
+            match(TokenType::SEMICOLON);
         }else {
-            throw std::runtime_error("Unknown statement type.");
+            throw std::runtime_error("Unknown statement type. " + currentToken.lexeme);
         }
     } catch (const std::runtime_error& e) {
-        std::cout << "Error parsing statement: " << e.what() << "\n";
+        std::ostringstream errorMessage;
+        errorMessage << "Error parsing statement: " << e.what() << "\n";
+        throw std::runtime_error(errorMessage.str());
     }
 }
 
@@ -133,12 +141,20 @@ void FluxParser::parseVariableDeclaration() {
         throw std::runtime_error("Expected variable type (VAR_NUMBER, VAR_STRING, VAR_BOOLEAN, CONST, VOID).");
     }
     consumeToken();
+    if (varType == TokenType::CONST ) {
+        std::cout << "Parsing Constant type...\n";
+        if (currentToken.type != TokenType::VAR_NUMBER && currentToken.type != TokenType::VAR_STRING && currentToken.type != TokenType::VAR_BOOLEAN) {
+            throw std::runtime_error("Expected variable type (VAR_NUMBER, VAR_STRING, VAR_BOOLEAN).");
+        }
+        consumeToken();
+    }
+
     if (currentToken.type == TokenType::FUNC && varType != TokenType::CONST) {
         std::cout << "Parsing Function Declaration...\n";
         parseFunction();
     } else {
-        if (currentToken.type != TokenType::IDENTIFIER) {
-            throw std::runtime_error("Expected variable name (identifier).");
+        if (currentToken.type != TokenType::IDENTIFIER && currentToken.type != TokenType::UPPERCASE_IDENTIFIER) {
+            throw std::runtime_error("Expected variable name (identifier, uppercase_identifier).");
         }
         std::string variableName = currentToken.lexeme;
         std::cout << "Variable name: " << variableName << "\n";
@@ -169,38 +185,28 @@ void FluxParser::parseThisVariable() {
 
 void FluxParser::parseConstantDeclaration() {
     std::cout << "Parsing Constant Declaration...\n";
-    match(TokenType::CONST);  // Verifica que el token sea 'CONST'
-
-    // Verifica que el tipo de la constante sea válido
-    if (currentToken.type != TokenType::VAR_NUMBER &&
-        currentToken.type != TokenType::VAR_STRING &&
-        currentToken.type != TokenType::VAR_BOOLEAN) {
-        throw std::runtime_error("Expected a valid constant type.");
-        }
     TokenType constType = currentToken.type;
-    consumeToken();  // Consumiendo el tipo de la constante
-
-    // Verifica que el siguiente token sea un identificador
-    if (currentToken.type != TokenType::IDENTIFIER) {
+    if (constType != TokenType::CONST) {
+        throw std::runtime_error("Expected a valid constant type.");
+    }
+    consumeToken();
+    if (currentToken.type != TokenType::VAR_NUMBER && currentToken.type != TokenType::VAR_STRING && currentToken.type != TokenType::VAR_BOOLEAN) {
+        throw std::runtime_error("Expected const data type.");
+    }
+    consumeToken();
+    if (currentToken.type != TokenType::UPPERCASE_IDENTIFIER) {
         throw std::runtime_error("Expected constant name.");
     }
-    std::string constName = currentToken.lexeme;
-    consumeToken();  // Consumiendo el nombre de la constante
-
-    // Verifica que haya un '=' para la asignación
-    if (currentToken.type != TokenType::ASSIGN) {
-        throw std::runtime_error("Expected '=' after constant name.");
+    consumeToken();
+    if (currentToken.type == TokenType::ASSIGN) {
+        consumeToken();
+        parseExpression();
     }
-    consumeToken();  // Consumiendo el '='
-
-    // Parse de la expresión que asignará el valor a la constante
-    parseExpression();
-    match(TokenType::SEMICOLON);  // Finaliza con un punto y coma
+    match(TokenType::SEMICOLON);
 }
 
 void FluxParser::parseExpression() {
     parsePrimaryExpression();
-
     while (currentToken.type == TokenType::ADD || currentToken.type == TokenType::SUBSTRACT || currentToken.type == TokenType::MULTIPLY
             || currentToken.type == TokenType::DIVIDE || currentToken.type == TokenType::LESS || currentToken.type == TokenType::GREATER) {
         Token op = currentToken;
@@ -281,7 +287,7 @@ void FluxParser::parseClassAccess() {
     if (accessType == TokenType::PUBLIC) {
         match(TokenType::PUBLIC);
         match(TokenType::LBRACE);
-        while (TokenType::RBRACE != currentToken.type && currentToken.type != TokenType::EOFF) {
+        while (TokenType::RBRACE != currentToken.type) {
             if (currentToken.type == TokenType::VAR_NUMBER || currentToken.type == TokenType::VAR_STRING || currentToken.type == TokenType::VAR_BOOLEAN) {
                 parseVariableDeclaration();
             } else if (currentToken.type == TokenType::CONST) {
@@ -294,7 +300,7 @@ void FluxParser::parseClassAccess() {
     } else if (accessType == TokenType::PRIVATE) {
         match(TokenType::PRIVATE);
         match(TokenType::LBRACE);
-        while (TokenType::RBRACE != currentToken.type && currentToken.type != TokenType::EOFF) {
+        while (TokenType::RBRACE != currentToken.type) {
             if (currentToken.type == TokenType::VAR_NUMBER || currentToken.type == TokenType::VAR_STRING || currentToken.type == TokenType::VAR_BOOLEAN) {
                 parseVariableDeclaration();
             } else if (currentToken.type == TokenType::CONST) {
@@ -504,4 +510,53 @@ void FluxParser::parseForLoop() {
     match(TokenType::LBRACE);
     parseBlock();
     match(TokenType::RBRACE);
+}
+
+void FluxParser::parseWhileLoop() {
+    std::cout << "Parsing While Loop...\n";
+    match(TokenType::WHILE);
+
+    match(TokenType::LPAREN);
+    parseExpression();
+    match(TokenType::RPAREN);
+
+    match(TokenType::LBRACE);
+    parseBlock();
+    match(TokenType::RBRACE);
+}
+
+void FluxParser::parseSwitch() {
+    std::cout << "Parsing Switch Statement...\n";
+    match(TokenType::SWITCH);
+    match(TokenType::LPAREN);
+    parseExpression();
+    match(TokenType::RPAREN);
+    match(TokenType::LBRACE);
+
+    while (currentToken.type == TokenType::CASE || currentToken.type == TokenType::DEFAULT) {
+        if (currentToken.type == TokenType::CASE) {
+            std::cout << "Parsing Case Statement...\n";
+            match(TokenType::CASE);
+            parseExpression();
+            match(TokenType::COLON);
+            while (currentToken.type != TokenType::CASE && currentToken.type != TokenType::DEFAULT) {
+                parseStatement();
+            }
+        } else if (currentToken.type == TokenType::DEFAULT) {
+            std::cout << "Parsing Default Case...\n";
+            match(TokenType::DEFAULT);
+            match(TokenType::COLON);
+            parseBlock();
+        }
+    }
+    match(TokenType::RBRACE);
+}
+
+bool FluxParser::isExpressionStart(TokenType type) {
+    return type == TokenType::IDENTIFIER ||
+           type == TokenType::NUMBER ||
+           type == TokenType::STRING ||
+           type == TokenType::LPAREN ||
+           type == TokenType::SUBSTRACT ||
+           type == TokenType::NOT;
 }
