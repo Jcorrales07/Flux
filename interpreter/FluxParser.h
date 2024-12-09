@@ -14,22 +14,50 @@ private:
     size_t currentIndex;
     Token currentToken;
 
+    //movements
     void advance();
     void consumeToken();
     void match(TokenType expectedType);
 
+    // statements
     void parseProgram();
     void parseStatement();
-
+    void parseThisVariable();
+    void parseArray();
+    void parseConstantDeclaration();
     void parseVariableDeclaration();
     void parseExpression();
     void parsePrimaryExpression();
-    void parseClass();
+    void parseComment();
+    bool isExpressionStart(TokenType type);
+
+    // class functions
     void parseFunction();
+    void parseClass();
     void parseConstructorCall();
     void parseArguments();
     void parseBlock();
     void parseClassBody();
+    void parseClassConstructor();
+    void parseThrow();
+    void parseCallParams();
+
+    // imports
+    void parseImportStatement();
+
+    // access methods
+    void parseClassAccess();
+    void parseAccessSpecifier();
+
+    // condicionales
+    void parseSwitch();
+
+    // loops
+    void parseForLoop();
+    void parseWhileLoop();
+
+    //try catch
+    void parseTryCatchFinally();
 
     std::vector<Function> functions;
 
