@@ -1,12 +1,17 @@
 #pragma once
 #include <vector>
 #include <string>
-#include "FluxTokens.h"  // Assuming you have a Token class or structure
+#include <variant>
+#include "FluxTokens.h"
+#include <map>
+#include "RuntimeVariables.h"
 
 struct Function {
     std::string name;
     std::vector<std::string> parameters;
 };
+
+using VariableValue = std::variant<int, double, std::string, bool, std::monostate>;
 
 class FluxParser {
 private:
@@ -14,24 +19,31 @@ private:
     size_t currentIndex;
     Token currentToken;
 
-    //movements
+    // Runtime variables
+    RuntimeVariables runtime; // Variable storage for the runtime
+
+    // Evaluations
+    std::variant<int, double, std::string, bool, std::monostate> evaluateExpression();
+
+    // Movements
     void advance();
     void consumeToken();
     void match(TokenType expectedType);
 
-    // statements
+    // Statements
     void parseProgram();
     void parseStatement();
     void parseThisVariable();
     void parseArray();
     void parseConstantDeclaration();
     void parseVariableDeclaration();
-    void parseExpression();
+    std::variant<int, double, std::string, bool, std::monostate> parseExpression();
     void parsePrimaryExpression();
     void parseComment();
     bool isExpressionStart(TokenType type);
+    std::variant<int, double, std::string, bool, std::monostate> convertToVariant(const VariableValue& value);
 
-    // class functions
+    // Class functions
     void parseFunction();
     void parseClass();
     void parseConstructorCall();
@@ -41,22 +53,30 @@ private:
     void parseClassConstructor();
     void parseThrow();
     void parseCallParams();
+    void parseFunctionParameters();
+    void parseParameter();
 
-    // imports
+    // Imports
     void parseImportStatement();
 
-    // access methods
+    // Access methods
     void parseClassAccess();
     void parseAccessSpecifier();
 
-    // condicionales
+    // Conditionals
     void parseSwitch();
+    void parseCase();
+    void parseDefault();
 
-    // loops
+    // Loops
     void parseForLoop();
     void parseWhileLoop();
+    void executeWhileLoop(std::function<bool()> condition, std::function<void()> body);
+    void executeSwitch(std::variant<int, double, std::string> expr,
+                   const std::map<std::variant<int, double, std::string>, std::function<void()>>& cases,
+                   std::function<void()> defaultCase);
 
-    //try catch
+    // Try-catch
     void parseTryCatchFinally();
 
     std::vector<Function> functions;
