@@ -6,8 +6,8 @@
 #include <variant>
 #include <stdexcept>
 #include <iostream>
-// Define a VariableValue type as a std::variant to hold different types of variables
-using VariableValue = std::variant<int, double, std::string, bool, std::monostate>;
+
+using VariableValue = std::variant<int, double, std::string, bool>;
 
 class RuntimeVariables {
 public:

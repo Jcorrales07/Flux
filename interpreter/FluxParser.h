@@ -11,7 +11,7 @@ struct Function {
     std::vector<std::string> parameters;
 };
 
-using VariableValue = std::variant<int, double, std::string, bool, std::monostate>;
+using VariableValue = std::variant<int, double, std::string, bool>;
 
 class FluxParser {
 private:
@@ -23,7 +23,7 @@ private:
     RuntimeVariables runtime; // Variable storage for the runtime
 
     // Evaluations
-    std::variant<int, double, std::string, bool, std::monostate> evaluateExpression();
+    std::variant<int, double, std::string, bool> evaluateExpression();
 
     // Movements
     void advance();
@@ -37,11 +37,11 @@ private:
     void parseArray();
     void parseConstantDeclaration();
     void parseVariableDeclaration();
-    std::variant<int, double, std::string, bool, std::monostate> parseExpression();
+    std::variant<int, double, std::string, bool> parseExpression();
     void parsePrimaryExpression();
     void parseComment();
     bool isExpressionStart(TokenType type);
-    std::variant<int, double, std::string, bool, std::monostate> convertToVariant(const VariableValue& value);
+    std::variant<int, double, std::string, bool> convertToVariant(const VariableValue& value);
 
     // Class functions
     void parseFunction();

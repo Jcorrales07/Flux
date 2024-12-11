@@ -4,7 +4,7 @@
 #include <iostream>
 #include <map>
 
-using VariableValue = std::variant<int, double, std::string, bool, std::monostate, std::vector<int>>;
+using VariableValue = std::variant<int, double, std::string, bool, std::vector<int>>;
 
 class RuntimeVariables {
 public:
@@ -44,8 +44,6 @@ void RuntimeVariables::declareVariable(const std::string& name, const VariableVa
             if (i < vec.size() - 1) std::cout << ", ";
         }
         std::cout << "]";
-    } else if (std::holds_alternative<std::monostate>(value)) {
-        std::cout << "uninitialized (std::monostate)";
     }
 
     std::cout << std::endl;
@@ -84,8 +82,6 @@ void RuntimeVariables::printVariable(const std::string& name) {
                 if (i < vec.size() - 1) std::cout << ", ";
             }
             std::cout << "]";
-        } else if (std::holds_alternative<std::monostate>(value)) {
-            std::cout << "uninitialized (std::monostate)";
         }
 
         std::cout << std::endl;

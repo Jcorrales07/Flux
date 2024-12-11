@@ -2,8 +2,8 @@ cmake_minimum_required(VERSION 3.27)
 project(Flux)
 
 set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_OSX_ARCHITECTURES "arm64")
-
+set(CMAKE_OSX_ARCHITECTURES "arm64" CACHE STRING "Build architectures for Mac" FORCE)
+include_directories(/Users/dan29reyes/CLionProjects/Crow/include)
 add_executable(Flux main.cpp
         interpreter/FluxTokens.h
         interpreter/FluxLexer.cpp

@@ -11,7 +11,7 @@
 
 RuntimeVariables runtimeVariables;
 // You can modify it to include 'int' as well:
-using VariableValue = std::variant<int, double, std::string, bool, std::monostate>;
+using VariableValue = std::variant<int, double, std::string, bool>;
 struct VariableEntry {
     VariableValue value;
     bool isConst; // Indicates if the variable is a constant
@@ -81,7 +81,7 @@ void FluxParser::match(TokenType expectedType) {
     }
 }
 
-std::variant<int, double, std::string, bool, std::monostate> FluxParser::evaluateExpression() {
+std::variant<int, double, std::string, bool> FluxParser::evaluateExpression() {
     std::stack<std::variant<double, std::string, bool>> operands; // Stack to store operands
     std::stack<Token> operators;  // Stack to store operators
 
@@ -423,9 +423,6 @@ void FluxParser::parseVariableDeclaration() {
             initialValue = std::string("");  // Initialize as an empty string
         } else if (varType == TokenType::VAR_BOOLEAN) {
             initialValue = false;  // Initialize as false
-        } else if (varType == TokenType::VOID) {
-            // No initialization needed for VOID type, use std::monostate to represent uninitialized state
-            initialValue = std::monostate{};  // Void represents an uninitialized state
         } else {
             throw std::runtime_error("Invalid variable type for initialization.");
         }
@@ -440,8 +437,6 @@ void FluxParser::parseVariableDeclaration() {
         std::cout << std::get<std::string>(initialValue);
     } else if (std::holds_alternative<bool>(initialValue)) {
         std::cout << (std::get<bool>(initialValue) ? "true" : "false");
-    } else if (std::holds_alternative<std::monostate>(initialValue)) {
-        std::cout << "void";  // Representing VOID (uninitialized state)
     }
     std::cout << "\n";
 }
@@ -495,11 +490,11 @@ void FluxParser::parseCallParams() {
     match(TokenType::SEMICOLON);
 }
 
-std::variant<int, double, std::string, bool, std::monostate> FluxParser::parseExpression() {
+std::variant<int, double, std::string, bool> FluxParser::parseExpression() {
     std::cout << "Parsing Expression...\n";
 
     // Example: evaluate an expression (this is a placeholder, replace with your actual logic)
-    std::variant<int, double, std::string, bool, std::monostate> result = evaluateExpression();
+    std::variant<int, double, std::string, bool> result = evaluateExpression();
     return result;  // result is of type double, which is valid for the variant
 }
 
@@ -768,7 +763,7 @@ void FluxParser::parseForLoop() {
         match(TokenType::LPAREN);
 
         // Parse the start of the range expression
-        std::variant<int, double, std::string, bool, std::monostate> startExpr = evaluateExpression();
+        std::variant<int, double, std::string, bool> startExpr = evaluateExpression();
         if (std::holds_alternative<int>(startExpr)) {
             int startValue = std::get<int>(startExpr);
             std::cout << "Start value: " << startValue << std::endl;
@@ -776,7 +771,7 @@ void FluxParser::parseForLoop() {
             match(TokenType::COMMA);
 
             // Parse the end of the range expression
-            std::variant<int, double, std::string, bool, std::monostate> endExpr = evaluateExpression();
+            std::variant<int, double, std::string, bool> endExpr = evaluateExpression();
             if (std::holds_alternative<int>(endExpr)) {
                 int endValue = std::get<int>(endExpr);
                 std::cout << "End value: " << endValue << std::endl;
