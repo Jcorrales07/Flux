@@ -7,11 +7,10 @@
 #include <stack>
 #include <unordered_map>
 #include "RuntimeVariables.h"
-#include <stdexcept>
 
 RuntimeVariables runtimeVariables;
-// You can modify it to include 'int' as well:
-using VariableValue = std::variant<int, double, std::string, bool>;
+RuntimeVariables runtime;
+
 struct VariableEntry {
     VariableValue value;
     bool isConst; // Indicates if the variable is a constant
@@ -81,8 +80,8 @@ void FluxParser::match(TokenType expectedType) {
     }
 }
 
-std::variant<int, double, std::string, bool> FluxParser::evaluateExpression() {
-    std::stack<std::variant<double, std::string, bool>> operands; // Stack to store operands
+std::variant<int, double, std::string, bool, std::vector<int>> FluxParser::evaluateExpression() {
+    std::stack<std::variant<int, double, std::string, bool>> operands; // Stack to store operands
     std::stack<Token> operators;  // Stack to store operators
 
     auto precedence = [](TokenType type) {
@@ -106,45 +105,39 @@ std::variant<int, double, std::string, bool> FluxParser::evaluateExpression() {
         }
     };
 
-    auto applyOperator = [&](std::variant<double, std::string, bool> left,
-                             std::variant<double, std::string, bool> right,
+    auto applyOperator = [&](std::variant<int, double, std::string, bool> left,
+                             std::variant<int, double, std::string, bool> right,
                              TokenType op) {
         if (op == TokenType::ADD) {
             if (std::holds_alternative<std::string>(left) || std::holds_alternative<std::string>(right)) {
                 std::string leftStr = std::holds_alternative<std::string>(left) ? std::get<std::string>(left) : std::to_string(std::get<double>(left));
                 std::string rightStr = std::holds_alternative<std::string>(right) ? std::get<std::string>(right) : std::to_string(std::get<double>(right));
-                return std::variant<double, std::string, bool>(leftStr + rightStr);
+                return std::variant<int, double, std::string, bool>(leftStr + rightStr);
             } else {
-                return std::variant<double, std::string, bool>(
+                return std::variant<int, double, std::string, bool>(
                     std::get<double>(left) + std::get<double>(right));
             }
         } else if (op == TokenType::SUBSTRACT) {
-            return std::variant<double, std::string, bool>(
+            return std::variant<int, double, std::string, bool>(
                 std::get<double>(left) - std::get<double>(right));
         } else if (op == TokenType::MULTIPLY) {
-            return std::variant<double, std::string, bool>(
+            return std::variant<int, double, std::string, bool>(
                 std::get<double>(left) * std::get<double>(right));
         } else if (op == TokenType::DIVIDE) {
             if (std::get<double>(right) == 0) throw std::runtime_error("Division by zero.");
-            return std::variant<double, std::string, bool>(
+            return std::variant<int, double, std::string, bool>(
                 std::get<double>(left) / std::get<double>(right));
-        } else if (op == TokenType::MOD) {
-            return std::variant<double, std::string, bool>(
-                fmod(std::get<double>(left), std::get<double>(right)));
-        } else if (op == TokenType::POWER) {
-            return std::variant<double, std::string, bool>(
-                pow(std::get<double>(left), std::get<double>(right)));
         } else if (op == TokenType::GREATER_EQUAL) {
-            return std::variant<double, std::string, bool>(
+            return std::variant<int, double, std::string, bool>(
                 std::get<double>(left) > std::get<double>(right));
         } else if (op == TokenType::LESS) {
-            return std::variant<double, std::string, bool>(
+            return std::variant<int, double, std::string, bool>(
                 std::get<double>(left) < std::get<double>(right));
         } else if (op == TokenType::EQUAL) {
-            return std::variant<double, std::string, bool>(
+            return std::variant<int, double, std::string, bool>(
                 std::get<double>(left) == std::get<double>(right));
         } else if (op == TokenType::NOT_EQUAL) {
-            return std::variant<double, std::string, bool>(
+            return std::variant<int, double, std::string, bool>(
                 std::get<double>(left) != std::get<double>(right));
         } else {
             throw std::runtime_error("Unknown operator.");
@@ -153,21 +146,28 @@ std::variant<int, double, std::string, bool> FluxParser::evaluateExpression() {
 
     while (currentToken.type != TokenType::SEMICOLON && currentToken.type != TokenType::EOFF) {
         if (currentToken.type == TokenType::NUMBER) {
-            operands.push(std::stod(currentToken.lexeme));
+            operands.push(std::variant<int, double, std::string, bool>(std::stod(currentToken.lexeme)));
             consumeToken();
         } else if (currentToken.type == TokenType::STRING) {
-            operands.push(currentToken.lexeme);
+            operands.push(std::variant<int, double, std::string, bool>(currentToken.lexeme));
             consumeToken();
         } else if (currentToken.type == TokenType::IDENTIFIER) {
-            // Handle variable lookup from runtime
-            if (runtime.hasVariable(currentToken.lexeme)) {
-                // Assuming runtime.getVariable() returns a VariableValue
-                std::string identifier = currentToken.lexeme;
-                std::cout << identifier<< "ping" << std::endl;
-                // VariableValue value = runtime.getVariable(currentToken.lexeme);
-                // operands.push(value);
+            std::string identifier = currentToken.lexeme;
+            if (runtime.hasVariable(identifier)) {
+                auto variableValue = runtime.getVariable(identifier);
+                if (std::holds_alternative<int>(variableValue)) {
+                    operands.push(std::variant<int, double, std::string, bool>(std::get<int>(variableValue)));
+                } else if (std::holds_alternative<double>(variableValue)) {
+                    operands.push(std::variant<int, double, std::string, bool>(std::get<double>(variableValue)));
+                } else if (std::holds_alternative<std::string>(variableValue)) {
+                    operands.push(std::variant<int, double, std::string, bool>(std::get<std::string>(variableValue)));
+                } else if (std::holds_alternative<bool>(variableValue)) {
+                    operands.push(std::variant<int, double, std::string, bool>(std::get<bool>(variableValue)));
+                } else {
+                    throw std::runtime_error("Unsupported variable type for: " + identifier);
+                }
             } else {
-                throw std::runtime_error("Variable not found: " + currentToken.lexeme);
+                throw std::runtime_error("Variable not found: " + identifier);
             }
             consumeToken();
         } else if (currentToken.type == TokenType::LPAREN) {
@@ -185,6 +185,7 @@ std::variant<int, double, std::string, bool> FluxParser::evaluateExpression() {
             }
             consumeToken();
         } else {
+            // Handle operators
             while (!operators.empty() && precedence(operators.top().type) >= precedence(currentToken.type)) {
                 auto right = operands.top(); operands.pop();
                 auto left = operands.top(); operands.pop();
@@ -192,10 +193,11 @@ std::variant<int, double, std::string, bool> FluxParser::evaluateExpression() {
                 operands.push(applyOperator(left, right, op.type));
             }
             operators.push(currentToken);
-            consumeToken();
+            consumeToken();  // Move to the next token
         }
     }
 
+    // Apply remaining operators in the stack
     while (!operators.empty()) {
         auto right = operands.top(); operands.pop();
         auto left = operands.top(); operands.pop();
@@ -203,6 +205,7 @@ std::variant<int, double, std::string, bool> FluxParser::evaluateExpression() {
         operands.push(applyOperator(left, right, op.type));
     }
 
+    // Ensure there is only one result left on the operand stack
     if (operands.size() != 1) {
         throw std::runtime_error("Invalid expression.");
     }
@@ -406,6 +409,12 @@ void FluxParser::parseVariableDeclaration() {
         throw std::runtime_error("Expected variable name (identifier, uppercase_identifier).");
     }
     std::string variableName = currentToken.lexeme;
+
+    // Check if the variable has already been declared
+    if (runtimeVariables.hasVariable(variableName)) {
+        throw std::runtime_error("Variable already declared: " + variableName);
+    }
+
     consumeToken();
 
     // Parse optional initialization
@@ -414,9 +423,7 @@ void FluxParser::parseVariableDeclaration() {
         consumeToken(); // Consume '='
 
         initialValue = parseExpression();
-    }
-    else {
-        // Default value based on type
+    } else {
         if (varType == TokenType::VAR_NUMBER) {
             initialValue = 0.0;  // Initialize as a double
         } else if (varType == TokenType::VAR_STRING) {
@@ -479,23 +486,48 @@ void FluxParser::parseConstantDeclaration() {
 }
 
 void FluxParser::parseCallParams() {
-    parseExpression();
-
+    std::vector<std::variant<int, double, std::string, bool, std::vector<int>>> parsedResults;
+    parsedResults.push_back(parseExpression());
     while (currentToken.type == TokenType::COMMA) {
         consumeToken();
-        parseExpression();
+        parsedResults.push_back(parseExpression());
     }
-
-    match(TokenType::RPAREN);
-    match(TokenType::SEMICOLON);
+    consumeToken();
+    printResults(parsedResults);
 }
 
-std::variant<int, double, std::string, bool> FluxParser::parseExpression() {
-    std::cout << "Parsing Expression...\n";
+void FluxParser::printResults(const std::vector<std::variant<int, double, std::string, bool, std::vector<int>>>& parsedResults) {
+    std::cout << "All parsed expressions:" << std::endl;
+    for (const auto& result : parsedResults) {
+        print(result);
+    }
+}
 
-    // Example: evaluate an expression (this is a placeholder, replace with your actual logic)
-    std::variant<int, double, std::string, bool> result = evaluateExpression();
-    return result;  // result is of type double, which is valid for the variant
+void FluxParser::print(const std::variant<int, double, std::string, bool, std::vector<int>>& result) {
+    std::visit([](auto&& arg) {
+        if constexpr (std::is_same_v<std::decay_t<decltype(arg)>, int>) {
+            std::cout << arg << std::endl;
+        } else if constexpr (std::is_same_v<std::decay_t<decltype(arg)>, double>) {
+            std::cout << arg << std::endl;
+        } else if constexpr (std::is_same_v<std::decay_t<decltype(arg)>, std::string>) {
+            std::cout << arg << std::endl;
+        } else if constexpr (std::is_same_v<std::decay_t<decltype(arg)>, bool>) {
+            std::cout << (arg ? "true" : "false") << std::endl;
+        } else if constexpr (std::is_same_v<std::decay_t<decltype(arg)>, std::vector<int>>) {
+            std::cout << "[";
+            for (const auto& val : arg) {
+                std::cout << val << " ";
+            }
+            std::cout << "]" << std::endl;
+        }
+    }, result);
+}
+
+
+std::variant<int, double, std::string, bool, std::vector<int>> FluxParser::parseExpression() {
+    std::cout << "Parsing Expression...\n";
+    std::variant<int, double, std::string, bool, std::vector<int>> result = evaluateExpression();
+    return result;
 }
 
 void FluxParser::parsePrimaryExpression() {
@@ -732,7 +764,6 @@ void FluxParser::parseArray() {
         if (currentToken.type != TokenType::NUMBER && currentToken.type != TokenType::STRING) {
             throw std::runtime_error("Invalid element type in array. Expected NUMBER or STRING.");
         }
-
         if (currentToken.type == TokenType::COMMA) {
             consumeToken();
         }
@@ -763,7 +794,7 @@ void FluxParser::parseForLoop() {
         match(TokenType::LPAREN);
 
         // Parse the start of the range expression
-        std::variant<int, double, std::string, bool> startExpr = evaluateExpression();
+        std::variant<int, double, std::string, bool, std::vector<int>> startExpr = evaluateExpression();
         if (std::holds_alternative<int>(startExpr)) {
             int startValue = std::get<int>(startExpr);
             std::cout << "Start value: " << startValue << std::endl;
@@ -771,7 +802,7 @@ void FluxParser::parseForLoop() {
             match(TokenType::COMMA);
 
             // Parse the end of the range expression
-            std::variant<int, double, std::string, bool> endExpr = evaluateExpression();
+            std::variant<int, double, std::string, bool, std::vector<int>> endExpr = evaluateExpression();
             if (std::holds_alternative<int>(endExpr)) {
                 int endValue = std::get<int>(endExpr);
                 std::cout << "End value: " << endValue << std::endl;
@@ -811,36 +842,124 @@ void FluxParser::parseForLoop() {
 void FluxParser::parseWhileLoop() {
     std::cout << "Parsing While Loop...\n";
     match(TokenType::WHILE);
-
     match(TokenType::LPAREN);
-    // Parse the condition expression for the while loop
-    auto conditionExpr = evaluateExpression();  // Evaluate the expression
-
+    bool conditionResult = evaluateCondition();
     match(TokenType::RPAREN);
-
     match(TokenType::LBRACE);
-    // Parse and execute the block inside the loop
-    parseBlock();  // Assumes parseBlock executes statements inside the loop
-    match(TokenType::RBRACE);
 
-    // Execute the while loop at runtime
-    executeWhileLoop([this]() -> bool {
-        // Evaluate the condition expression during each loop iteration
-        auto condition = evaluateExpression();
-        if (std::holds_alternative<bool>(condition)) {
-            return std::get<bool>(condition);  // Return the boolean value
-        } else {
-            throw std::runtime_error("While loop condition must evaluate to a boolean.");
-        }
+    executeWhileLoop([this, conditionResult]() mutable -> bool {  // Capture conditionResult by mutable reference
+        bool currentCondition = evaluateCondition();  // Reevaluate the condition in each iteration
+        conditionResult = currentCondition; // Update the stored condition value
+        return conditionResult;  // Return the updated result
     }, [&]() {
-        // Execute the body of the loop
-        parseBlock();  // Re-run the block code for the body of the loop
+        parseBlock();
     });
+    match(TokenType::RBRACE);
 }
 
-void executeWhileLoop(std::function<bool()> condition, std::function<void()> body) {
+std::variant<bool, int, std::string> FluxParser::parseConditionExpression() {
+    auto leftOperand = parseOperand();
+
+    if (currentToken.type == TokenType::EQUAL ||
+        currentToken.type == TokenType::NOT_EQUAL ||
+        currentToken.type == TokenType::LESS ||
+        currentToken.type == TokenType::GREATER ||
+        currentToken.type == TokenType::LESS_EQUAL ||
+        currentToken.type == TokenType::GREATER_EQUAL) {
+        Token expression = currentToken;
+        consumeToken();
+        auto rightOperand = parseOperand();
+        return evaluateComparison(leftOperand, expression, rightOperand);
+    }
+    return leftOperand;
+}
+
+
+bool FluxParser::evaluateCondition() {
+    auto condition = parseConditionExpression();
+    if (std::holds_alternative<bool>(condition)) {
+        return std::get<bool>(condition);
+    } else if (std::holds_alternative<int>(condition)) {
+        return std::get<int>(condition) != 0;
+    } else if (std::holds_alternative<std::string>(condition)) {
+        throw std::runtime_error("Una cadena no puede ser usada directamente como una condición.");
+    } else {
+        throw std::runtime_error("La condición del bucle while debe ser un booleano o un número.");
+    }
+}
+
+std::variant<bool, int, std::string> FluxParser::parseOperand() {
+    if (currentToken.type == TokenType::TRUE || currentToken.type == TokenType::FALSE) {
+        consumeToken();
+        return currentToken.type == TokenType::TRUE;
+    }
+    else if (currentToken.type == TokenType::NUMBER) {
+        std::variant<bool, int, std::string> val = std::stoi(currentToken.lexeme);
+        consumeToken();
+        try {
+            return val;
+        } catch (const std::invalid_argument& e) {
+            throw std::runtime_error("El valor del número no es válido: " + currentToken.lexeme);
+        } catch (const std::out_of_range& e) {
+            throw std::runtime_error("El número está fuera del rango permitido: " + currentToken.lexeme);
+        }
+    }
+    else if (currentToken.type == TokenType::STRING) {
+        std::string val = currentToken.lexeme;
+        consumeToken();
+        return val;
+    } else {
+        throw std::runtime_error("Operando inválido en la condición.");
+    }
+}
+
+bool FluxParser::evaluateComparison(
+    const std::variant<bool, int, std::string>& leftOperand,
+    const Token& operatorToken,
+    const std::variant<bool, int, std::string>& rightOperand) {
+
+    if (leftOperand.index() != rightOperand.index()) {
+        throw std::runtime_error("Los operandos deben ser del mismo tipo para la comparación.");
+    }
+
+    if (std::holds_alternative<bool>(leftOperand)) {
+        bool left = std::get<bool>(leftOperand);
+        bool right = std::get<bool>(rightOperand);
+
+        if (operatorToken.type == TokenType::EQUAL) return left == right;
+        if (operatorToken.type == TokenType::NOT_EQUAL) return left != right;
+    }
+
+    // Manejo de números
+    else if (std::holds_alternative<int>(leftOperand)) {
+        int left = std::get<int>(leftOperand);
+        int right = std::get<int>(rightOperand);
+
+        if (operatorToken.type == TokenType::EQUAL) return left == right;
+        if (operatorToken.type == TokenType::NOT_EQUAL) return left != right;
+        if (operatorToken.type == TokenType::LESS) return left < right;
+        if (operatorToken.type == TokenType::GREATER) return left > right;
+        if (operatorToken.type == TokenType::LESS_EQUAL) return left <= right;
+        if (operatorToken.type == TokenType::GREATER_EQUAL) return left >= right;
+    }
+
+    // Manejo de cadenas
+    else if (std::holds_alternative<std::string>(leftOperand)) {
+        std::string left = std::get<std::string>(leftOperand);
+        std::string right = std::get<std::string>(rightOperand);
+        std::cout << left << operatorToken.lexeme << right << std::endl;
+
+        if (operatorToken.type == TokenType::EQUAL) return left == right;
+        if (operatorToken.type == TokenType::NOT_EQUAL) return left != right;
+    }
+
+    throw std::runtime_error("Operador o tipo de datos inválido para la comparación.");
+}
+
+
+void FluxParser::executeWhileLoop(std::function<bool()> condition, std::function<void()> body) {
     while (condition()) {
-        body();  // Execute the body of the loop
+        body();
     }
 }
 

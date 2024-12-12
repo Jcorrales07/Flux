@@ -4,25 +4,24 @@
 #include <string>
 #include <unordered_map>
 #include <variant>
-#include <stdexcept>
-#include <iostream>
+#include <vector>
 
-using VariableValue = std::variant<int, double, std::string, bool>;
+#include "FluxParser.h"
+
+using VariableValue = std::variant<int, double, std::string, bool, std::vector<int>>;
 
 class RuntimeVariables {
 public:
-    // Map to store variables by their name
-    std::unordered_map<std::string, VariableValue> variables;
-
-    // Declare a variable and store it in the map
-    void declareVariable(const std::string& name, const VariableValue& value);
-
-    // Retrieve a variable by its name
     VariableValue getVariable(const std::string& name);
-
+    void printValue(const VariableValue &value) const;
+    void declareVariable(const std::string& name, const VariableValue& value);
     bool hasVariable(const std::string& name) const;
-    // Print the value of a variable for debugging
-    void printVariable(const std::string& name);
+    void printAllVariables() const;
+    void printVariable(const std::string &name) const;
+
+private:
+    std::string valueToString(const VariableValue& value) const;
+    std::unordered_map<std::string, VariableValue> variables;
 };
 
 #endif // RUNTIMEVARIABLES_H

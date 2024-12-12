@@ -1,88 +1,94 @@
 #pragma once
+
 #include <vector>
 #include <string>
 #include <variant>
 #include "FluxTokens.h"
-#include <map>
 #include "RuntimeVariables.h"
+#include <functional>
 
+// Structure representing a function with its name and parameters
 struct Function {
     std::string name;
     std::vector<std::string> parameters;
 };
 
-using VariableValue = std::variant<int, double, std::string, bool>;
+// Type alias for variable value (can hold multiple types using std::variant)
+using VariableValue = std::variant<int, double, std::string, bool, std::vector<int>>;
 
 class FluxParser {
-private:
-    std::vector<Token> tokens;
-    size_t currentIndex;
-    Token currentToken;
-
-    // Runtime variables
-    RuntimeVariables runtime; // Variable storage for the runtime
+    std::vector<Token> tokens;            // List of tokens to parse
+    size_t currentIndex;                  // Current index in the token list
+    Token currentToken;                   // Current token being processed
 
     // Evaluations
-    std::variant<int, double, std::string, bool> evaluateExpression();
+    std::variant<int, double, std::string, bool, std::vector<int>> evaluateExpression();
 
     // Movements
-    void advance();
-    void consumeToken();
-    void match(TokenType expectedType);
+    void advance();                       // Move to the next token
+    void consumeToken();                  // Consume the current token
+    void match(TokenType expectedType);   // Match expected token type
 
     // Statements
-    void parseProgram();
-    void parseStatement();
-    void parseThisVariable();
-    void parseArray();
-    void parseConstantDeclaration();
-    void parseVariableDeclaration();
-    std::variant<int, double, std::string, bool> parseExpression();
-    void parsePrimaryExpression();
-    void parseComment();
-    bool isExpressionStart(TokenType type);
+    void parseProgram();                  // Parse the entire program
+    void parseStatement();                // Parse a single statement
+    void parseThisVariable();             // Parse a "this" variable
+    void parseArray();                    // Parse array declarations
+    void parseConstantDeclaration();      // Parse constant declarations
+    void parseVariableDeclaration();      // Parse variable declarations
+    std::variant<int, double, std::string, bool, std::vector<int>> parseExpression();
+    void parsePrimaryExpression();        // Parse primary expressions
+    void parseComment();                  // Parse comments
+    bool isExpressionStart(TokenType type); // Check if token starts an expression
     std::variant<int, double, std::string, bool> convertToVariant(const VariableValue& value);
 
     // Class functions
-    void parseFunction();
-    void parseClass();
-    void parseConstructorCall();
-    void parseArguments();
-    void parseBlock();
-    void parseClassBody();
-    void parseClassConstructor();
-    void parseThrow();
-    void parseCallParams();
-    void parseFunctionParameters();
-    void parseParameter();
+    void parseFunction();                 // Parse function declarations
+    void parseClass();                    // Parse class declarations
+    void parseConstructorCall();          // Parse constructor calls
+    void parseArguments();                // Parse function arguments
+    void parseBlock();                    // Parse blocks of code (e.g., function body)
+    void parseClassBody();                // Parse class body
+    void parseClassConstructor();         // Parse class constructors
+    void parseThrow();                    // Parse throw statements
+    void parseCallParams();               // Parse function call parameters
+    void parseFunctionParameters();       // Parse function parameters
+    void parseParameter();                // Parse a single parameter
+    void printResults(const std::vector<std::variant<int, double, std::string, bool, std::vector<int>>>& parsedResults);
+    void print(const std::variant<int, double, std::string, bool, std::vector<int>>& result);
 
     // Imports
-    void parseImportStatement();
+    void parseImportStatement();          // Parse import statements
 
     // Access methods
-    void parseClassAccess();
-    void parseAccessSpecifier();
+    void parseClassAccess();              // Parse class access (e.g., public, private)
+    void parseAccessSpecifier();          // Parse access specifiers
 
     // Conditionals
-    void parseSwitch();
-    void parseCase();
-    void parseDefault();
+    void parseSwitch();                   // Parse switch statements
+    void parseCase();                     // Parse case statements within a switch
+    void parseDefault();                  // Parse default case in switch
+    bool evaluateCondition();
+    std::variant<bool, int, std::string> parseConditionExpression();
+    bool evaluateComparison(
+    const std::variant<bool, int, std::string>& leftOperand,
+    const Token& operatorToken,
+    const std::variant<bool, int, std::string>& rightOperand);
+    std::variant<bool, int, std::string> parseOperand();
 
     // Loops
-    void parseForLoop();
-    void parseWhileLoop();
+    void parseForLoop();                  // Parse for loops
+    void parseWhileLoop();                // Parse while loops
     void executeWhileLoop(std::function<bool()> condition, std::function<void()> body);
-    void executeSwitch(std::variant<int, double, std::string> expr,
-                   const std::map<std::variant<int, double, std::string>, std::function<void()>>& cases,
-                   std::function<void()> defaultCase);
 
-    // Try-catch
-    void parseTryCatchFinally();
+    // Try-catch blocks
+    void parseTryCatchFinally();          // Parse try-catch-finally blocks
 
-    std::vector<Function> functions;
+    // Functions container
+    std::vector<Function> functions;      // Store all functions parsed
 
 public:
-    FluxParser(const std::vector<Token>& tokens);
-    Token getCurrentToken() const;
-    void parse();
+    FluxParser(const std::vector<Token>& tokens); // Constructor that takes tokens for parsing
+    Token getCurrentToken() const;              // Get the current token
+    void parse();                               // Start the parsing process
 };
