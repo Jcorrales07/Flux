@@ -75,6 +75,8 @@ class FluxParser {
     const Token& operatorToken,
     const std::variant<bool, int, std::string>& rightOperand);
     std::variant<bool, int, std::string> parseOperand();
+    void skipBlock();
+    void skipRemainingElseBranches();
 
     // Loops
     void parseForLoop();                  // Parse for loops

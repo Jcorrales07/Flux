@@ -267,23 +267,34 @@ void FluxParser::parseStatement() {
         if (currentToken.type == TokenType::IF) {
             std::cout << "Parsing IF statement...\n";
             match(TokenType::IF);
-            parseExpression();
+            match(TokenType::LPAREN);
+            bool conditionResult = evaluateCondition();
+            match(TokenType::RPAREN);
             match(TokenType::LBRACE);
-            parseBlock();
-            match(TokenType::RBRACE);
-        } else if (currentToken.type == TokenType::ELSEIF) {
-            std::cout << "Parsing ELSEIF statement...\n";
-            match(TokenType::ELSEIF);
-            parseExpression();
-            match(TokenType::LBRACE);
-            parseBlock();
-            match(TokenType::RBRACE);
-        } else if (currentToken.type == TokenType::ELSE) {
-            std::cout << "Parsing ELSE statement...\n";
-            match(TokenType::ELSE);
-            match(TokenType::LBRACE);
-            parseBlock();
-            match(TokenType::RBRACE);
+            if (conditionResult) {
+                parseBlock();
+                skipRemainingElseBranches();
+            } else {
+                skipBlock();
+            }
+            while (currentToken.type == TokenType::ELSEIF) {
+                std::cout << "Parsing ELSEIF statement...\n";
+                match(TokenType::ELSEIF);
+                match(TokenType::LPAREN);
+                bool elseifConditionResult = evaluateCondition(); // Evaluate ELSEIF condition.
+                match(TokenType::RPAREN);
+                match(TokenType::LBRACE);
+
+                if (elseifConditionResult) {
+                    parseBlock();
+                    match(TokenType::RBRACE);
+                    skipRemainingElseBranches();
+                    return;
+                } else {
+                    skipBlock();
+                    return;
+                }
+            }
         } else if (currentToken.type == TokenType::CLASS) {
             std::cout << "Parsing Class Declaration...\n";
             parseClass();
@@ -371,6 +382,34 @@ void FluxParser::parseStatement() {
         std::ostringstream errorMessage;
         errorMessage << "Error parsing statement: " << e.what() << "\n";
         throw std::runtime_error(errorMessage.str());
+    }
+}
+
+void FluxParser::skipBlock() {
+    int braceCount = 1;
+    while (braceCount > 0 && currentToken.type != TokenType::EOFF && currentToken.type != TokenType::ELSEIF && currentToken.type != TokenType::ELSE) {
+        if (currentToken.type == TokenType::LBRACE) {
+            ++braceCount;
+        } else if (currentToken.type == TokenType::RBRACE) {
+            --braceCount;
+        }
+        consumeToken();
+    }
+}
+
+void FluxParser::skipRemainingElseBranches() {
+    while (currentToken.type == TokenType::ELSEIF || currentToken.type == TokenType::ELSE) {
+        if (currentToken.type == TokenType::ELSEIF) {
+            match(TokenType::ELSEIF);
+            match(TokenType::LPAREN);
+            evaluateCondition();
+            match(TokenType::RPAREN);
+        } else {
+            match(TokenType::ELSE);
+        }
+        match(TokenType::LBRACE);
+        skipBlock();
+        match(TokenType::RBRACE);
     }
 }
 
@@ -847,10 +886,10 @@ void FluxParser::parseWhileLoop() {
     match(TokenType::RPAREN);
     match(TokenType::LBRACE);
 
-    executeWhileLoop([this, conditionResult]() mutable -> bool {  // Capture conditionResult by mutable reference
-        bool currentCondition = evaluateCondition();  // Reevaluate the condition in each iteration
-        conditionResult = currentCondition; // Update the stored condition value
-        return conditionResult;  // Return the updated result
+    executeWhileLoop([this, conditionResult]() mutable -> bool {
+        bool currentCondition = evaluateCondition();
+        conditionResult = currentCondition;
+        return true;
     }, [&]() {
         parseBlock();
     });
@@ -882,7 +921,7 @@ bool FluxParser::evaluateCondition() {
     } else if (std::holds_alternative<int>(condition)) {
         return std::get<int>(condition) != 0;
     } else if (std::holds_alternative<std::string>(condition)) {
-        throw std::runtime_error("Una cadena no puede ser usada directamente como una condición.");
+        return std::get<std::string>(condition) != "";
     } else {
         throw std::runtime_error("La condición del bucle while debe ser un booleano o un número.");
     }
@@ -947,7 +986,6 @@ bool FluxParser::evaluateComparison(
     else if (std::holds_alternative<std::string>(leftOperand)) {
         std::string left = std::get<std::string>(leftOperand);
         std::string right = std::get<std::string>(rightOperand);
-        std::cout << left << operatorToken.lexeme << right << std::endl;
 
         if (operatorToken.type == TokenType::EQUAL) return left == right;
         if (operatorToken.type == TokenType::NOT_EQUAL) return left != right;
